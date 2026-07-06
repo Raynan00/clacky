@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Secrets / local config
+.env
+.env.local
+*.env.local
+.dev.vars
+
+# Clacky runtime / build artifacts
+~/.clacky/
+build/
+dist/
+*.spec.bak
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+demo.bat

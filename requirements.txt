@@ -1,0 +1,14 @@
+# Mitts calls LLM providers directly — no Claude Code, no agent SDK.
+# Install ONLY the provider(s) you want. Ollama needs nothing (stdlib HTTP).
+
+anthropic>=0.40           # provider: claude   (recommended; best quality)
+# openai>=1.0             # provider: openai
+# google-generativeai>=0.8  # provider: gemini
+#   ollama                # provider: ollama — free/local, no pip needed
+#                         #   just install Ollama + `ollama pull llama3.1`
+
+# Dev / test (the headless core needs none of the above)
+pytest>=8.0
+
+# Added later when wiring the companion shell (M2+):
+# PyQt6>=6.6              # tray / overlay UI (from the Bitshank base)

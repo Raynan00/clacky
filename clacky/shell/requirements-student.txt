@@ -1,0 +1,63 @@
+# Student version — 100% free, no API keys needed
+# Requires: Ollama installed + llama3.2-vision pulled
+
+# Core UI
+PyQt6>=6.6.0
+
+# Screen capture
+mss>=9.0.1
+Pillow>=10.0.0
+
+# Global hotkeys
+keyboard>=0.13.5
+
+# AI (local only)
+ollama>=0.3.0
+
+# Audio (sounddevice for capture + playback; av decodes MP3 from edge-tts)
+sounddevice>=0.4.6
+soundfile>=0.12.1
+numpy>=1.26.0
+av>=12.0.0
+
+# STT (local, free)
+faster-whisper>=1.0.0
+
+# TTS (free, no key)
+edge-tts>=6.1.10
+
+# Web search (no key)
+# Uses DuckDuckGo Instant API — zero cost, zero config
+
+# Windows-native pointer accuracy upgrade (UIA tree + offline OCR fallback)
+uiautomation>=2.0.0
+rapidocr-onnxruntime>=1.2.0
+
+# Web search (DDG anti-bot bypass — handles rotating endpoints/UAs)
+ddgs>=6.0.0
+
+# Lesson recorder (bundled ffmpeg so users don't need a system install)
+imageio>=2.30.0
+imageio-ffmpeg>=0.4.9
+
+# Cloud AI providers (optional — OpenAI key / Anthropic key)
+openai>=1.0.0
+anthropic>=0.100.0
+
+# Document parsing (drag-drop context)
+pypdf>=3.0.0
+python-docx>=1.0.0
+
+# Language detection (multilang mode)
+langdetect>=1.0.9
+
+# Workflow capture (click/keystroke recording)
+pynput>=1.7.0
+
+# Whisper.cpp bindings (faster offline STT alternative)
+pywhispercpp>=1.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+httpx>=0.27.0
+aiohttp>=3.9.0

@@ -1,0 +1,51 @@
+[project]
+name = "clacky"
+version = "0.1.0"
+description = "The open-source Windows agent companion — autonomous, but you can take it back."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+# No required runtime deps — Ollama works with the stdlib. Install a provider
+# extra for cloud models.
+dependencies = []
+
+[project.optional-dependencies]
+claude = ["anthropic>=0.40"]
+openai = ["openai>=1.0"]
+gemini = ["google-generativeai>=0.8"]
+# Opt-in reliable Gmail/Calendar path (see clacky/shell/google_workspace.py).
+# Needs a one-time OAuth setup; the browser-driving path works without this.
+google = ["google-api-python-client>=2.0", "google-auth-oauthlib>=1.0"]
+dev = ["pytest>=8.0"]
+# The companion shell (vendored from Bitshank under clacky/shell/). Core deps to
+# launch voice + screen + pointing on the free Ollama path. Premium/optional
+# extras (elevenlabs, tavily, pypdf, pytesseract, …) are listed in
+# clacky/shell/requirements.txt — install only what you need.
+shell = [
+    "PyQt6>=6.6.0",
+    "mss>=9.0.1",
+    "Pillow>=10.0.0",
+    "keyboard>=0.13.5",
+    "sounddevice>=0.4.6",
+    "soundfile>=0.12.1",
+    "numpy>=1.26.0",
+    "av>=12.0.0",
+    "faster-whisper>=1.0.0",
+    "edge-tts>=6.1.10",
+    "httpx>=0.27.0",
+    "aiohttp>=3.9.0",
+    "python-dotenv>=1.0.0",
+    "ollama>=0.3.0",
+    "uiautomation>=2.0.18",   # Tier-1 pixel-perfect pointing (Windows UIA)
+    "pynput>=1.7.7",          # Phase-2 actuation + workflow capture
+]
+
+[project.scripts]
+clacky = "clacky.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["clacky", "clacky.agent", "clacky.providers"]
