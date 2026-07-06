@@ -150,6 +150,15 @@ class ActionsMixin:
             f"Done — I moved {n} file{'s' if n != 1 else ''}{into}{tidy}. "
             "Say 'undo' if you want everything back.")
 
+    async def _run_undo_voice(self):
+        """Reverse the last organize — shared by the instant local 'undo' command
+        and the router's undo route (so ANY phrasing works, not just the keyword)."""
+        from clacky.agent import journal as _org_journal
+        stagger = float(os.environ.get("CLACKY_MOVE_STAGGER", "0.12") or 0)
+        msg = await asyncio.to_thread(_org_journal.undo_last, stagger)
+        slog("ACT", f"undo: {msg}")
+        await self._reply_local(msg)
+
     def _call_workspace(self, name: str, inp: dict):
         """Dispatch one Workspace tool to the Google API (blocking — run in a
         thread). Returns JSON-able data the model then summarizes for the ear."""
@@ -356,6 +365,32 @@ class ActionsMixin:
         "notion": [r"%LOCALAPPDATA%\Programs\Notion\Notion.exe", "notion://"],
     }
 
+    def _app_launchers(self) -> dict:
+        """Built-in launcher map merged with the user's ``~/.clacky/apps.json``:
+
+            {"my app": ["C:\\\\path\\\\to\\\\app.exe", "myapp://"], "other": "other://"}
+
+        Candidates are tried in order (exe paths checked for existence, then URL
+        protocols). User entries override built-ins — so 'Windows can't find X'
+        is fixable per-machine without touching code."""
+        cached = getattr(self, "_app_launchers_cache", None)
+        if cached is not None:
+            return cached
+        merged = dict(self._APP_LAUNCHERS)
+        try:
+            import json
+            from pathlib import Path
+            p = Path.home() / ".clacky" / "apps.json"
+            if p.exists():
+                user = json.loads(p.read_text(encoding="utf-8"))
+                for k, v in user.items():
+                    merged[k.strip().lower()] = [v] if isinstance(v, str) else list(v)
+                slog("ACT", f"loaded {len(user)} custom app launcher(s) from apps.json")
+        except Exception as e:
+            slog("ERROR", f"~/.clacky/apps.json ignored ({e})")
+        self._app_launchers_cache = merged
+        return merged
+
     def _launch_app(self, name: str):
         """Open a Windows app directly (fast, reliable) instead of driving the GUI.
         Known tricky apps (Steam etc.) launch via exe path / URL protocol; others
@@ -365,7 +400,7 @@ class ActionsMixin:
             return
         import os
         import subprocess
-        for cand in self._APP_LAUNCHERS.get(name.lower(), []):
+        for cand in self._app_launchers().get(name.lower(), []):
             if "://" in cand or cand.endswith(":"):
                 try:
                     os.startfile(cand)                   # URL protocol

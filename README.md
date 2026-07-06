@@ -87,6 +87,9 @@ The **file organizer** is move-only and fully reversible (`clacky undo`). The **
 ```
 clacky/
   shell/        # the voice + screen companion (clacky run) — the main app
+    routing.py  #   intent routing: local fast-paths + Haiku router
+    tour.py     #   guided screen tour + pointing (inline [POINT] tags)
+    actions.py  #   computer-use agent, launchers, organizer, background agents
   agent/        # computer-use actuation, permission model, safe file ops + undo
   providers/    # Claude / OpenAI / Gemini / Ollama / heuristic, behind one interface
   cli.py        # clacky organize / undo / run

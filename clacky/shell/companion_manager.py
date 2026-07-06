@@ -765,11 +765,7 @@ class CompanionManager(RoutingMixin, TourMixin, ActionsMixin, QObject):
                         and re.search(r"\b(un[- ]?do( that| it)?|put (it|everything) "
                                       r"back)[\s.!?]*$", _t, re.I)
                         and not re.match(r"(how|what|where|why|when)\b", _t, re.I))):
-                from clacky.agent import journal as _org_journal
-                _stagger = float(os.environ.get("CLACKY_MOVE_STAGGER", "0.12") or 0)
-                msg = await asyncio.to_thread(_org_journal.undo_last, _stagger)
-                slog("ACT", f"undo: {msg}")
-                await self._reply_local(msg)
+                await self._run_undo_voice()
                 return
 
             title = active_window_title()
@@ -849,6 +845,9 @@ class CompanionManager(RoutingMixin, TourMixin, ActionsMixin, QObject):
                     return
                 if route == "organize":
                     await self._run_organize_voice(transcript)
+                    return
+                if route == "undo":
+                    await self._run_undo_voice()   # any phrasing: "revert that" etc.
                     return
                 if route == "workspace":
                     await self._run_workspace(transcript)

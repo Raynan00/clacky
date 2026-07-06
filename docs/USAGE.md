@@ -104,6 +104,27 @@ buttons, and standard controls are accurate.
 The acting, tours, memory, and routing all require `ANTHROPIC_API_KEY`. On the free
 Ollama path, Clacky can still see, talk, and point, but not act.
 
+**"Windows can't find <app>" when she tries to open something.**
+Some apps (Steam-likes, Store installs) aren't resolvable by name. Teach her where
+yours live — create `~/.clacky/apps.json`:
+```json
+{ "steam": ["D:\\Games\\Steam\\steam.exe", "steam://open/main"],
+  "my tool": "mytool://" }
+```
+Candidates are tried in order (exe paths, then URL protocols); your entries
+override the built-ins.
+
+## Tuning (env vars)
+
+| Variable | Default | What it does |
+|---|---|---|
+| `CLACKY_HOTKEY` | `ctrl+alt+m` | Push-to-talk combo |
+| `CLACKY_WAKE_WORD` | `1` | `0` = wake word fully off (e.g. while recording a video that says "Clacky") |
+| `CLACKY_STT_KEYTERMS` | — | Comma-separated words to bias speech recognition toward (e.g. `Premiere Pro,Figma`) |
+| `CLACKY_STREAM_STT` / `CLACKY_STREAM_TTS` | `1` | `0` reverts to batch STT / whole-reply TTS |
+| `CLACKY_MOVE_STAGGER` | `0.12` | Seconds between file moves during organize/undo (`0` = instant) |
+| `CLACKY_ORGANIZE_MODEL` | Haiku | Model that plans folder cleanups |
+
 ## 6. Optional: Gmail / Calendar via the Google API
 
 By default Clacky drives your **logged-in web apps** (no setup). For the faster,

@@ -133,6 +133,8 @@ class RoutingMixin:
                     "- organize: tidy/clean up a FOLDER of files (desktop, downloads, "
                     "documents) — moving files into folders. NOT for on-screen UI "
                     "tasks or app windows.\n"
+                    "- undo: reverse/revert the file cleanup — 'undo that', 'put my "
+                    "files back', 'revert the cleanup'.\n"
                     "- chat: a specific question or ONE thing — 'what does this "
                     "button do', 'where's the X', 'what is this [single element]', "
                     "or any question not about touring the whole screen. Anything "
@@ -152,7 +154,7 @@ class RoutingMixin:
                                "run any of these to 'act': "
                                + ", ".join(f'"{n}"' for n in self._memory.skills) + ".")
             route_enum = ["act", "walkthrough", "remember", "forget",
-                          "learn_skill", "background", "organize", "chat"]
+                          "learn_skill", "background", "organize", "undo", "chat"]
             if workspace_on:
                 route_enum.insert(0, "workspace")
             resp = await client.messages.create(

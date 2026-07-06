@@ -21,9 +21,21 @@ re-vendor:
    - `~/.clicky/` → `~/.clacky/` (user skills dir).
    - The `CLICKY_*` environment-variable names were renamed to `CLACKY_*`
      (config + `.env`); no back-compat aliases remain.
-2. No logic changes. The Phase-2 agent seam (replacing the one-shot
-   `stream_response` call in `companion_manager.py` with the Computer Use loop)
-   is **not** wired here yet — see `docs/AGENT_PLAN.md` §1.
+2. **Clacky's agentic layer** was then built on top of the vendored base and
+   lives in dedicated modules mixed into `CompanionManager`:
+   - `routing.py` — intent routing (local fast-paths + a Haiku router as the
+     authority) and the shared warm API clients
+   - `tour.py` — the inline-`[POINT]`-tag guided tour + all pointing glue
+     (UIA snap, tag parsing, model-coordinate fallback)
+   - `actions.py` — the Computer Use agent loop, app/URL launching, the
+     voice-driven (journaled, reversible) organizer, Google Workspace tools,
+     and background research agents
+   - plus `memory_store.py` (cross-session memory + routines),
+     `google_workspace.py`, `session_log.py` (timestamped flight recorder),
+     and `audio/stt/deepgram_streaming.py` (live push-to-talk STT)
+
+   `companion_manager.py` keeps the vendored capture→STT→LLM→TTS state machine
+   and dispatches into those modules.
 
 ## How it's launched
 
