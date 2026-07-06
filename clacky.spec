@@ -57,7 +57,21 @@ a = Analysis(
     hiddenimports=hiddenimports,
     hookspath=[],
     runtime_hooks=[],
-    excludes=["tkinter"],
+    # Heavy libraries from the build machine's site-packages that some transitive
+    # hook drags in but Clacky never imports (verified: ~1.8 GB of dead weight —
+    # tensorflow alone was 1.1 GB). Without these the zip fits GitHub's 2 GiB
+    # release limit with room to spare.
+    excludes=[
+        "tkinter",
+        "tensorflow", "tensorboard", "keras",
+        "torch", "torchvision", "torchaudio",
+        "jax", "jaxlib",
+        "transformers", "sklearn", "scikit-learn",
+        "pandas", "matplotlib", "scipy",
+        "botocore", "boto3", "grpc",
+        "llvmlite", "numba", "imageio_ffmpeg",
+        "yt_dlp",
+    ],
     noarchive=False,
 )
 
