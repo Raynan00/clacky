@@ -41,17 +41,30 @@ Clicky is Mac-only. Clacky brings the same idea to the majority of desktops that
 
 - Tidies a folder from one LLM call; move-only and **fully reversible** with `clacky undo`.
 
-## Quick start (Windows)
+## Getting started (Windows 10/11)
 
-**Requirements:** Windows 10/11, Python 3.10+, an **Anthropic API key** (and a **Deepgram key** for good speech-to-text — without it, it falls back to slower local Whisper).
+You'll need an **Anthropic API key** (Clacky's brain) and ideally a **Deepgram key**
+(fast, accurate voice — free tier; without it she falls back to slower local
+Whisper). A first-run setup wizard collects both — links included.
+
+### Option 1 — Download the app *(no Python needed)*
+
+1. Grab **`Clacky-v0.1.0-windows.zip`** from [**Releases**](https://github.com/Raynan00/clacky/releases/latest)
+2. Extract anywhere and run `Clacky.exe`
+   *(the exe is unsigned, so SmartScreen may warn on first run — "More info → Run anyway")*
+3. The setup wizard walks you through your keys
+4. **Hold `Ctrl+Alt+M`, say *"what's on my screen?"*, and release** 🧤
+
+### Option 2 — Run from source
 
 ```powershell
-git clone <your-repo-url> clacky
+git clone https://github.com/Raynan00/clacky.git
 cd clacky
 pip install -e ".[shell,claude]"
+clacky run
 ```
 
-Add your keys — copy `.env.example` to `clacky/shell/.env` and fill in the shell section:
+Keys: let the wizard collect them, or copy `.env.example` → `clacky/shell/.env`:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-...
@@ -59,15 +72,7 @@ DEEPGRAM_API_KEY=...
 CLACKY_ACTIVE_LLM=claude
 ```
 
-(Or just run it — a first-run setup wizard walks you through keys.)
-
-Then:
-
-```powershell
-clacky run
-```
-
-**Hold `Ctrl+Alt+M`, say *"what's on my screen?"*, and release.** Full setup + troubleshooting: **[docs/USAGE.md](docs/USAGE.md)**.
+Full setup, what to say, and troubleshooting: **[docs/USAGE.md](docs/USAGE.md)**.
 
 ### Just want the file organizer? (no voice, no keys)
 
