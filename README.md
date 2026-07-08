@@ -1,16 +1,18 @@
 # Clacky 🧤
 
-**Clicky for Windows — open source. Talk to your PC and it sees your screen, points at things, and does them.**
+**Clicky for Windows — open source. Talk to your PC — she sees your screen, points at things, and actually does them.**
 
-Clacky is a voice-first desktop companion for Windows. Hold a hotkey, talk, and it:
+🎬 **Demo & write-up:** [raynanwuyep.com/clacky](https://raynanwuyep.com/clacky) · ⬇ **[Download for Windows](https://github.com/Raynan00/clacky/releases/latest)**
+
+Clacky is a voice-first desktop companion for Windows. Hold a hotkey, talk, and she:
 
 - **sees** your screen and answers questions about it,
 - **points** — a little buddy flies to whatever you're asking about (snaps to the real UI element, pixel-accurate),
 - **acts** — opens apps, clicks, types, runs multi-step tasks, using Claude Computer Use,
-- **remembers** you across sessions and can **learn routines** you teach it,
+- **remembers** you across sessions and **learns routines** you teach her by voice,
 - **tours** an app — "explain my screen" gives you a spoken, pointing walkthrough.
 
-Built on **Claude** (Sonnet 5 + Computer Use), **Deepgram** speech-to-text, and free **Edge TTS**.
+Her brain is **Claude** (Sonnet 5 + Computer Use); voice via **Deepgram** streaming STT and free **Edge TTS**.
 
 ### Where this fits
 
@@ -32,7 +34,7 @@ Clicky is Mac-only. Clacky brings the same idea to the majority of desktops that
 - Push-to-talk voice; an on-screen buddy that points at what you ask about.
 - *"What's on my screen?"* → a spoken answer, buddy points at the relevant thing.
 - *"Explain my screen"* / *"walk me through this"* → a teaching tour that points out several things, one at a time.
-- *"Open Notepad and type hello"*, *"click the Save button"*, *"go to youtube"* → it acts on your machine.
+- *"Open Notepad and type hello"*, *"click the Save button"*, *"go to YouTube"* → she acts on your machine.
 - *"Remember I prefer dark mode"*, *"save this as my morning routine"* → cross-session memory + learned routines.
 - *"Check my email"*, *"what's on my calendar"* → opens your logged-in web apps (or an opt-in Google API).
 - *"Go research X and tell me later"* → a background agent works while you keep talking.
@@ -55,7 +57,7 @@ Whisper). A first-run setup wizard collects both — links included.
 3. The setup wizard walks you through your keys
 4. **Hold `Ctrl+Alt+M`, say *"what's on my screen?"*, and release** 🧤
 
-### Option 2 — Run from source
+### Option 2 — Run from source *(Python 3.10+)*
 
 ```powershell
 git clone https://github.com/Raynan00/clacky.git
@@ -85,7 +87,15 @@ clacky undo                                          # reverse it
 
 ## A note on safety
 
-The **file organizer** is move-only and fully reversible (`clacky undo`). The **voice agent acts directly** — like Clicky, it does what you ask rather than nagging for permission — but it pauses to confirm on genuinely irreversible, high-stakes actions (send, delete, buy). It's an early build acting on your real machine, so **watch it, and press `Esc` to stop it at any time.**
+The **file organizer** is move-only and fully reversible (`clacky undo`). The **voice agent acts directly** — like Clicky, she does what you ask rather than nagging for permission — but she stops and hands back before genuinely irreversible, high-stakes actions (send, delete, buy). It's an early build acting on your real machine, so **watch her, and press `Esc` to stop at any time.**
+
+## Roadmap
+
+- **Learnable skills (SKILL.md)** — adopting the same open Agent Skills standard used by Claude, Hermes, and OpenClaw, with Clacky's twist: you teach her by *voice*.
+- **Clacky Bridge (MCP)** — exposing her eyes and pointer as an MCP server, so *any* agent (Claude, OpenClaw, Hermes) can see and point at a Windows screen.
+- **Better desktop control** — opt-in shortcut/icon arrangement, more launcher coverage.
+
+Issues and PRs very welcome — this is an early build and the fastest way to shape it. 🧤
 
 ## Layout
 
@@ -100,6 +110,8 @@ clacky/
   cli.py        # clacky organize / undo / run
 docs/           # USAGE.md (start here), plus design docs
 tests/          # headless tests with a fake provider
+packaging/      # PyInstaller entry (clacky.spec builds the .exe)
+organizer/      # early file-organizer prototype — superseded by clacky/, kept for its tests
 ```
 
 ## Credits & license
