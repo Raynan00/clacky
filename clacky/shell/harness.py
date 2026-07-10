@@ -164,12 +164,13 @@ async def run_background_task(task: str, timeout_s: int | None = None,
     env = {k: v for k, v in os.environ.items() if k not in _KEEP_PRIVATE}
     prompt = _build_prompt(task, ws, context)
 
+    evidence = ""
     try:
         import acp_client
         if acp_client.available():
             # Persistent ACP session — the ONLY headless surface that mounts
             # connected MCP apps (one-shot `-z` never does).
-            ok, summary = await asyncio.to_thread(
+            ok, summary, evidence = await asyncio.to_thread(
                 acp_client.run, prompt, ws, model, timeout_s, env)
         else:
             ok, summary = await asyncio.to_thread(
@@ -189,9 +190,13 @@ async def run_background_task(task: str, timeout_s: int | None = None,
 
     dt = time.perf_counter() - t0
     artifacts = sorted(p for p in ws.rglob("*") if p.is_file())
-    # Pull LINK: lines out of the reply — they're for the browser, not the ear.
+    # Pull LINK: lines out of the reply — they're for the browser, not the
+    # ear. A link is kept ONLY if it appears in the raw tool traffic: the
+    # server that did the delivery returned it. Model prose alone (which a
+    # web page could prompt-inject) never opens anything.
     links = re.findall(r"^LINK:\s*(https?://\S+)\s*$", summary,
                        re.IGNORECASE | re.MULTILINE)
+    links = [l for l in links if l.rstrip("/") and l.rstrip("/") in evidence]
     summary = re.sub(r"^LINK:.*$", "", summary,
                      flags=re.IGNORECASE | re.MULTILINE).strip()
     if len(summary) > 500:                # keep the spoken part tight

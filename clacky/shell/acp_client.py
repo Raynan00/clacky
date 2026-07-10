@@ -119,6 +119,7 @@ class _Session:
         # which must never reach the user's ears.
         segments: list[list[str]] = [[]]
         chunks = segments[0]
+        self.tool_evidence: list[str] = getattr(self, "tool_evidence", [])
         while time.time() < deadline:
             try:
                 msg = self._inbox.get(timeout=2)
@@ -145,6 +146,14 @@ class _Session:
                     if c.get("type") == "text":
                         chunks.append(c.get("text", ""))
                 elif kind in ("tool_call", "tool_call_update"):
+                    # Keep raw tool traffic: it's the EVIDENCE layer. A URL is
+                    # only trustworthy if a tool result actually contains it
+                    # (the server returned it), not just because the model
+                    # wrote it in prose.
+                    try:
+                        self.tool_evidence.append(json.dumps(u))
+                    except Exception:
+                        pass
                     if chunks:                       # start a fresh segment
                         segments.append([])
                         chunks = segments[-1]
@@ -167,8 +176,10 @@ class _Session:
 
 
 def run(prompt: str, cwd: Path, model: str, timeout_s: int,
-        env: dict | None = None) -> tuple[bool, str]:
-    """Run one task to completion in a fresh ACP session. Returns (ok, text).
+        env: dict | None = None) -> tuple[bool, str, str]:
+    """Run one task to completion in a fresh ACP session. Returns
+    (ok, text, tool_evidence) — evidence is the raw tool traffic, used to
+    verify that URLs the agent reports were actually returned by tools.
 
     The model is taken from config's `model`/`provider` (set by the harness),
     so no fragile ACP set_model picker call is needed."""
@@ -185,13 +196,14 @@ def run(prompt: str, cwd: Path, model: str, timeout_s: int,
                          timeout=min(120, timeout_s))
         sid = (r.get("result") or {}).get("sessionId")
         if not sid:
-            return False, "the background session wouldn't start"
+            return False, "the background session wouldn't start", ""
         r, text = s.request("session/prompt",
                             {"sessionId": sid,
                              "prompt": [{"type": "text", "text": prompt}]},
                             timeout=timeout_s)
         stop = (r.get("result") or {}).get("stopReason")
         ok = stop in (None, "end_turn", "completed", "stop")
-        return ok, text.strip() or "done"
+        return ok, text.strip() or "done", "\n".join(
+            getattr(s, "tool_evidence", []))
     finally:
         s.close()
