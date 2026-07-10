@@ -21,7 +21,8 @@ google = ["google-api-python-client>=2.0", "google-auth-oauthlib>=1.0"]
 # key. Already included in [shell] — this standalone extra exists for minimal
 # installs that want only the harness.
 background = ["hermes-agent>=0.18; python_version < '3.14'",
-              "ddgs; python_version < '3.14'"]
+              "ddgs; python_version < '3.14'",
+              "agent-client-protocol>=0.9; python_version < '3.14'"]
 dev = ["pytest>=8.0"]
 # The companion shell (vendored from Bitshank under clacky/shell/). Core deps to
 # launch voice + screen + pointing on the free Ollama path. Premium/optional
@@ -51,6 +52,9 @@ shell = [
     # Free, keyless web search for those agents (hermes' ddgs provider) —
     # without it research tasks fight search-engine bot walls in a browser.
     "ddgs; python_version < '3.14'",
+    # ACP lets us drive hermes as a persistent session — the only headless
+    # surface that mounts connected MCP apps (so "put it in my Notion" works).
+    "agent-client-protocol>=0.9; python_version < '3.14'",
 ]
 
 [project.scripts]

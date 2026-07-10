@@ -2,11 +2,11 @@
 harness.py — Clacky's background-work lane, backed by an embedded agent harness.
 
 The design lesson comes straight from OpenClicky's architecture: don't build an
-agent runtime, EMBED one behind a clean process boundary. Our default backend is
-`hermes-agent` (Nous Research — 212K-star MIT harness, driven headlessly via
-`hermes -z`, running on the user's same Anthropic key). The boundary is one
-function, so the backend is swappable (Claude Agent SDK was also spiked and
-works; `CLACKY_BG_HARNESS` picks).
+agent runtime, EMBED one behind a clean process boundary. Our backend is
+`hermes-agent` (Nous Research — MIT, running on the user's same Anthropic key),
+driven as a persistent ACP session (see acp_client.py) so it mounts connected
+MCP apps — one-shot `hermes -z` never does. `-z` remains a fallback for
+research-only when the ACP deps aren't present.
 
 What this buys over the old builtin lane: background tasks that produce
 ARTIFACTS — "go research X" stops being a spoken summary and becomes a file on
@@ -150,6 +150,7 @@ async def run_background_task(task: str, timeout_s: int | None = None,
     ws = ws or _task_workspace(task)
     model = os.environ.get("CLACKY_BG_MODEL", "claude-sonnet-5")
     timeout_s = timeout_s or int(os.environ.get("CLACKY_BG_TIMEOUT", "900"))
+    _ensure_config_model(model)          # so the ACP session runs on it
     slog("BG", f"harness task starting (model={model}): {task[:60]!r}")
     t0 = time.perf_counter()
 
@@ -157,23 +158,19 @@ async def run_background_task(task: str, timeout_s: int | None = None,
     # (Deepgram, editor IPC tokens, …) must not leak into an agent whose
     # terminal reads the web.
     env = {k: v for k, v in os.environ.items() if k not in _KEEP_PRIVATE}
-
-    def _run() -> subprocess.CompletedProcess:
-        # CREATE_NO_WINDOW: hermes and its whole child tree (terminal tool,
-        # node/powershell helpers) attach to an invisible console — otherwise
-        # background tasks pop blank console windows over the user's work.
-        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-        return subprocess.run(
-            ["hermes", "-z", _build_prompt(task, ws, context),
-             "--provider", "anthropic", "-m", model],
-            capture_output=True, text=True, timeout=timeout_s,
-            cwd=str(ws), creationflags=flags, env=env,
-        )
+    prompt = _build_prompt(task, ws, context)
 
     try:
-        proc = await asyncio.to_thread(_run)
-    except subprocess.TimeoutExpired:
-        # Salvage whatever it finished — a killed task's files are still files.
+        import acp_client
+        if acp_client.available():
+            # Persistent ACP session — the ONLY headless surface that mounts
+            # connected MCP apps (one-shot `-z` never does).
+            ok, summary = await asyncio.to_thread(
+                acp_client.run, prompt, ws, model, timeout_s, env)
+        else:
+            ok, summary = await asyncio.to_thread(
+                _run_oneshot, prompt, ws, model, timeout_s, env)
+    except TimeoutError:
         arts = sorted(p for p in ws.rglob("*") if p.is_file())
         slog("BG", f"harness task TIMED OUT after {timeout_s}s "
                    f"(salvaged {len(arts)} artifact(s))")
@@ -183,21 +180,54 @@ async def run_background_task(task: str, timeout_s: int | None = None,
                              workspace=ws, artifacts=arts)
     except Exception as e:
         slog("BG", f"harness task failed to run: {e}")
-        return HarnessResult(False, "I couldn't start that background task", workspace=ws)
+        return HarnessResult(False, "I couldn't start that background task",
+                             workspace=ws)
 
     dt = time.perf_counter() - t0
     artifacts = sorted(p for p in ws.rglob("*") if p.is_file())
-    summary = (proc.stdout or "").strip()
-    # Keep the spoken part tight even if the harness rambles.
-    if len(summary) > 500:
+    if len(summary) > 500:                # keep the spoken part tight
         summary = summary[:500].rsplit(".", 1)[0] + "."
-    slog("BG", f"harness task done in {dt:.0f}s exit={proc.returncode} "
+    slog("BG", f"harness task done in {dt:.0f}s ok={ok} "
                f"artifacts={len(artifacts)}")
-    if proc.returncode != 0:
-        err = (proc.stderr or "").strip()[-200:]
-        slog("BG", f"harness stderr: {err}")
-        return HarnessResult(False, "the background task hit an error", ws, artifacts)
+    if not ok:
+        return HarnessResult(False, summary or "the background task hit an error",
+                             ws, artifacts)
     return HarnessResult(True, summary or "done", ws, artifacts)
+
+
+def _ensure_config_model(model: str) -> None:
+    """Point hermes' default model at CLACKY_BG_MODEL (ACP sessions read it
+    from config; set_model's curated picker rejects some valid ids)."""
+    try:
+        import yaml
+        from clacky.connections import config_path
+        p = config_path()
+        cfg = yaml.safe_load(p.read_text(encoding="utf-8")) or {} if p.exists() else {}
+        if cfg.get("model") != model or cfg.get("provider") != "anthropic":
+            cfg["model"] = model
+            cfg["provider"] = "anthropic"
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _run_oneshot(prompt: str, ws: Path, model: str, timeout_s: int,
+                 env: dict) -> tuple[bool, str]:
+    """Fallback path when ACP deps are absent: one-shot `-z`. Research and
+    files work here; connected-app delivery does not (no MCP in one-shot)."""
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    try:
+        proc = subprocess.run(
+            ["hermes", "-z", prompt, "--provider", "anthropic", "-m", model],
+            capture_output=True, text=True, timeout=timeout_s,
+            cwd=str(ws), creationflags=flags, env=env)
+    except subprocess.TimeoutExpired:
+        raise TimeoutError("oneshot")
+    if proc.returncode != 0:
+        slog("BG", f"oneshot stderr: {(proc.stderr or '').strip()[-200:]}")
+        return False, "the background task hit an error"
+    return True, (proc.stdout or "").strip() or "done"
 
 
 def open_workspace(ws: Path) -> None:
