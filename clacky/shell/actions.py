@@ -247,7 +247,23 @@ class ActionsMixin:
         self._bg[tid]["task"] = asyncio.create_task(self._bg_worker(tid, description))
 
     async def _bg_worker(self, tid: int, description: str):
+        """Prefer the embedded agent harness (real work, real files); fall back to
+        the builtin web-research summary if no harness is installed."""
         try:
+            import harness
+            if harness.harness_available():
+                res = await harness.run_background_task(description)
+                self._bg[tid].update(status="done" if res.ok else "error",
+                                     result=res.summary)
+                report = res.summary
+                if res.ok and res.artifacts:
+                    n = len(res.artifacts)
+                    report += (f" I saved {n} file{'s' if n != 1 else ''} for you — "
+                               "opening the folder now.")
+                await self._bg_report(tid, report)
+                if res.ok and res.artifacts and res.workspace:
+                    harness.open_workspace(res.workspace)
+                return
             result = await self._research_agent(description)
             self._bg[tid].update(status="done", result=result)
         except Exception as e:

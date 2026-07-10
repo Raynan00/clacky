@@ -16,6 +16,9 @@ gemini = ["google-generativeai>=0.8"]
 # Opt-in reliable Gmail/Calendar path (see clacky/shell/google_workspace.py).
 # Needs a one-time OAuth setup; the browser-driving path works without this.
 google = ["google-api-python-client>=2.0", "google-auth-oauthlib>=1.0"]
+# Background agent harness (see clacky/shell/harness.py): "go research X" tasks
+# run through hermes-agent and produce real files. Runs on your same Anthropic key.
+background = ["hermes-agent>=0.18"]
 dev = ["pytest>=8.0"]
 # The companion shell (vendored from Bitshank under clacky/shell/). Core deps to
 # launch voice + screen + pointing on the free Ollama path. Premium/optional
