@@ -42,7 +42,7 @@ class ConnectDialog(QDialog):
 
         self.setWindowTitle(f"Connect {app_name}")
         self.setModal(False)
-        self.setMinimumSize(540, 320)
+        self.setMinimumSize(480, 220)
         self.setStyleSheet("""
             QDialog { background: #0e1014; color: #e8eaed; }
             QLabel  { color: #e8eaed; }
@@ -76,40 +76,51 @@ class ConnectDialog(QDialog):
         layout.addWidget(title)
 
         known = known_app_url(app_name)
-        if known and api_key_header_for(known):
+        key_based = bool(known and api_key_header_for(known))
+        if key_based:
             how = (f'Paste your API key from '
                    f'<a href="https://dashboard.composio.dev" '
-                   f'style="color:#2f7fff">dashboard.composio.dev</a> — one key '
-                   f"connects her to 1000+ apps at once.")
+                   f'style="color:#2f7fff">dashboard.composio.dev</a> — one '
+                   f"key connects her to 1000+ apps.")
         elif known:
-            how = ("Connect signs you in with your browser — approve it there "
-                   "and the task carries on with real delivery.")
+            how = "Connect signs you in with your browser."
         else:
-            how = (f"Paste its MCP server URL (for hosted apps, "
+            how = (f"Paste its MCP server URL — "
                    f'<a href="https://composio.dev" style="color:#2f7fff">composio.dev</a> '
-                   f"has one for most) and Connect signs you in with your "
-                   f"browser when the server supports it.")
+                   f"hosts one for most apps.")
         subtitle = QLabel(
-            f"This task wants to deliver its output into <b>{app_name}</b>, "
-            f"which isn't linked to Clacky's background agents yet. " + how
-            + " Or skip, and she'll leave you files instead."
-        )
+            f"This task wants to deliver into <b>{app_name}</b>. " + how)
         subtitle.setObjectName("subtitle")
         subtitle.setWordWrap(True)
         subtitle.setOpenExternalLinks(True)
         layout.addWidget(subtitle)
 
+        # Plumbing appears only when it's actually needed — a known OAuth app
+        # is just a sentence and a Connect button, like Claude Code's flow.
         self.url_edit = QLineEdit()
         self.url_edit.setPlaceholderText("server URL  (or a local command)")
         if known:
             self.url_edit.setText(known)
+            self.url_edit.hide()
         layout.addWidget(self.url_edit)
 
         self.token_edit = QLineEdit()
-        self.token_edit.setPlaceholderText(
-            "token — optional, only for servers without browser sign-in")
         self.token_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        if key_based:
+            self.token_edit.setPlaceholderText("Composio API key")
+        else:
+            self.token_edit.setPlaceholderText(
+                "token — only for servers without browser sign-in")
+            if known:
+                self.token_edit.hide()
         layout.addWidget(self.token_edit)
+
+        if known and not key_based:
+            adv = QLabel('<a href="#" style="color:#5a5d63">use a custom '
+                         'server or token instead…</a>')
+            adv.linkActivated.connect(lambda _:
+                (self.url_edit.show(), self.token_edit.show(), adv.hide()))
+            layout.addWidget(adv)
 
         self.status = QLabel("")
         self.status.setObjectName("status")
@@ -196,6 +207,8 @@ class ConnectDialog(QDialog):
             self._finish(True)
             self.accept()
             return
+        self.url_edit.show()
+        self.token_edit.show()
         self.status.setText(
             f"⚠️ Browser sign-in didn't work ({err}). If this server uses "
             f"plain tokens, paste one above and hit Connect again.")
