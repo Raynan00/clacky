@@ -9,7 +9,6 @@ Clicky is a Windows port of [farzaa/clicky](https://github.com/farzaa/clicky) (o
 
 ## Hi, this is Clicky 👋
 
-[![Watch the demo](assets/clicky-demo.gif)](https://youtu.be/WYY9yJHDaEU)
 
 > 🎬 **[Watch full demo on YouTube →](https://youtu.be/WYY9yJHDaEU)**
 
