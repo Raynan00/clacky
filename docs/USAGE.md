@@ -82,6 +82,25 @@ A small buddy appears near your cursor and Clacky sits in the system tray.
   (`.exe` users — Clacky finds it on PATH). Without it, background tasks fall
   back to a spoken web-research summary. Artifacts land in `~/.clacky/background/`.
 
+**Connect your apps to background agents (MCP)**
+Background tasks can use any [MCP](https://modelcontextprotocol.io) server —
+add them to `~/.hermes/config.yaml` and Clacky's background lane picks them up:
+
+```yaml
+mcp_servers:
+  fetch:                       # example: a local stdio server
+    command: python
+    args: ["-m", "mcp_server_fetch"]
+  composio:                    # example: hosted servers (Notion, Sheets, Slack, …)
+    url: https://mcp.composio.dev/<your-server>   # from your Composio dashboard
+    headers: { Authorization: "Bearer <token>" }
+```
+
+With something like [Composio](https://composio.dev) connected, *"go research X
+and put it in my Notion"* completes end-to-end — research **and** delivery.
+Foreground stays local-first (your screen, your sessions); connected tools are
+strictly opt-in for the background lane.
+
 **Skills** (teach her once, she keeps it — the [agentskills.io](https://agentskills.io) standard)
 - "Save this as game time — open Steam and Elden Ring tutorials." → writes
   `~/.clacky/skills/game-time/SKILL.md`. Edit it in any editor, drop in skills
