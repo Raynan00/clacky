@@ -63,6 +63,13 @@ class RoutingMixin:
         if re.match(r"(clacky[\s,]+)?"
                     r"(go(?!\s+(over|through|back))|agent|do it|just do it|"
                     r"go ahead|take over|handle (it|this)|make it happen)\b", s):
+            # …unless it's delegation: "go research X / look into X / …and tell
+            # me later" belongs to the background lane (harness + artifacts),
+            # not the on-screen agent. Delegation language outranks the trigger.
+            if re.search(r"\b(research|look into|dig into)\b|"
+                         r"\btell me (later|when)\b|\breport back\b|"
+                         r"\bin the background\b", s):
+                return "background"
             return "act"
         # Folder cleanup → the journaled organizer (instant route). Requires BOTH a
         # cleanup verb and a folder word so "clean up my timeline" stays with chat.
