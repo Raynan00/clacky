@@ -57,6 +57,7 @@ class SetupWizard(QDialog):
 
     progress_signal = pyqtSignal(str, float)
     finished_signal = pyqtSignal(bool, str)   # ok, message
+    composio_signal = pyqtSignal(bool, str)   # ok, message (browser sign-in)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -145,18 +146,24 @@ class SetupWizard(QDialog):
         self.deepgram_edit.setStyleSheet(self.anthropic_edit.styleSheet())
         kb.addWidget(self.deepgram_edit)
         lab3 = QLabel(
-            'Composio API key <span style="color:#a0a3a8">(optional — lets '
-            'background agents reach 1000+ apps: Notion, Slack, Sheets, …)</span> · '
-            '<a href="https://dashboard.composio.dev" '
-            'style="color:#2f7fff">get a key</a>')
-        lab3.setOpenExternalLinks(True)
+            'Composio <span style="color:#a0a3a8">(optional — lets background '
+            'agents reach 1000+ apps: Notion, Slack, Sheets, …)</span>')
         kb.addWidget(lab3)
+        comp_row = QHBoxLayout()
+        comp_row.setSpacing(8)
+        self.composio_btn = QPushButton("Sign in with your browser")
+        self.composio_btn.setObjectName("secondary")
+        self.composio_btn.clicked.connect(self._on_composio_connect)
+        comp_row.addWidget(self.composio_btn)
         self.composio_edit = QLineEdit()
         self.composio_edit.setPlaceholderText(
-            "optional — she'll also offer this the first time a task needs an app")
+            "…or paste an API key (dashboard.composio.dev)")
         self.composio_edit.setEchoMode(QLineEdit.EchoMode.Password)
         self.composio_edit.setStyleSheet(self.anthropic_edit.styleSheet())
-        kb.addWidget(self.composio_edit)
+        comp_row.addWidget(self.composio_edit, 1)
+        kb.addLayout(comp_row)
+        self._composio_connected = False
+        self.composio_signal.connect(self._on_composio_done)
         self.keys_box.hide()
         layout.addWidget(self.keys_box)
 
@@ -322,6 +329,36 @@ class SetupWizard(QDialog):
 
     # ── Handlers ─────────────────────────────────────────────────────────────
 
+    def _on_composio_connect(self):
+        """Browser sign-in to Composio (same OAuth flow as `clacky connect`)."""
+        if self._composio_connected:
+            return
+        self.composio_btn.setEnabled(False)
+        self.composio_btn.setText("Opened your browser — approve there…")
+
+        def _worker():
+            try:
+                from clacky.connections import KNOWN_APPS, connect_oauth
+                connect_oauth("composio", KNOWN_APPS["composio"])
+                self.composio_signal.emit(True, "")
+            except Exception as e:
+                self.composio_signal.emit(False, str(e))
+
+        threading.Thread(target=_worker, daemon=True).start()
+
+    def _on_composio_done(self, ok: bool, msg: str):
+        if ok:
+            self._composio_connected = True
+            self.composio_btn.setText("Composio connected ✓")
+            self.composio_edit.hide()
+        else:
+            self.composio_btn.setEnabled(True)
+            self.composio_btn.setText("Sign in with your browser")
+            self.status.setText(
+                f"⚠️ Composio sign-in didn't finish ({msg[:80]}) — you can "
+                f"paste an API key instead, or skip it; Clacky offers it "
+                f"again when a task needs an app.")
+
     def _on_action(self):
         s = self._step
         if s == "choice":
@@ -483,10 +520,11 @@ class SetupWizard(QDialog):
         if s == "validating_keys":
             # Keys are good — persist them (frozen-safe path) + apply live.
             cfg.save_env_values(getattr(self, "_pending_keys", {}))
-            # Composio key (optional) goes to the background-agent config, not
-            # the .env — one paste here = 1000+ connected apps later.
+            # Composio key (optional, the paste-fallback) goes to the
+            # background-agent config, not the .env. Skipped if the browser
+            # sign-in already connected it.
             ck = getattr(self, "_pending_composio", "")
-            if ck:
+            if ck and not getattr(self, "_composio_connected", False):
                 try:
                     from clacky.connections import KNOWN_APPS, add_server
                     add_server("composio", KNOWN_APPS["composio"], ck)
