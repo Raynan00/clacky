@@ -39,9 +39,9 @@ CLACKY_HOTKEY=ctrl+alt+m
 Get keys: [console.anthropic.com](https://console.anthropic.com) ·
 [console.deepgram.com](https://console.deepgram.com) (free tier is plenty).
 On first run, a setup wizard collects these for you — plus an optional
-[Composio](https://dashboard.composio.dev) key that gives background agents
-1000+ connected apps (you can always add it later; Clacky offers it the
-first time a task needs an app).
+[Composio](https://composio.dev) browser sign-in that gives background
+agents 1000+ connected apps (you can always do it later; Clacky offers it
+the first time a task needs an app).
 
 ## 3. Run
 
@@ -85,8 +85,8 @@ A small buddy appears near your cursor and Clacky sits in the system tray.
   harness running on your same Anthropic key. **Included by default** in the
   source install (except on Python 3.14, which Hermes doesn't support yet).
   `.exe` users: install Hermes once
-  (`pip install hermes-agent ddgs` with any Python 3.11–3.13, or Nous's
-  installer) —
+  (`pip install hermes-agent ddgs agent-client-protocol` with any Python
+  3.11–3.13, or Nous's installer) —
   Clacky finds it on PATH automatically, no config. Without it, background
   tasks fall back to a spoken web-research summary — and Clacky will tell you
   once, at the moment it would have helped, how to upgrade.

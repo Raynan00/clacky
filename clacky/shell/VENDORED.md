@@ -31,8 +31,11 @@ re-vendor:
      voice-driven (journaled, reversible) organizer, Google Workspace tools,
      and background research agents
    - `harness.py` — the background-work lane: an embedded agent harness
-     (hermes-agent, headless) that runs delegated tasks in per-task workspaces
-     and produces artifacts
+     (hermes-agent) that runs delegated tasks in per-task workspaces and
+     produces artifacts
+   - `acp_client.py` — drives hermes as a persistent ACP session (JSON-RPC
+     over stdio) so background tasks get the connected MCP apps; one-shot
+     `hermes -z` stays as the research-only fallback
    - `agent_skills.py` — learnable skills as SKILL.md files (agentskills.io
      standard), shared by the foreground agent and the background harness
    - `ui/connect_dialog.py` — just-in-time app connect prompt: when a
