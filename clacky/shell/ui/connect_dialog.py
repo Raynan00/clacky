@@ -78,10 +78,10 @@ class ConnectDialog(QDialog):
         known = known_app_url(app_name)
         key_based = bool(known and api_key_header_for(known))
         if key_based:
-            how = (f'Paste your API key from '
+            how = (f"Connect signs you in with your browser — one account "
+                   f"links her to 1000+ apps. (Or paste an API key from "
                    f'<a href="https://dashboard.composio.dev" '
-                   f'style="color:#2f7fff">dashboard.composio.dev</a> — one '
-                   f"key connects her to 1000+ apps.")
+                   f'style="color:#2f7fff">dashboard.composio.dev</a> below.)')
         elif known:
             how = "Connect signs you in with your browser."
         else:
@@ -162,14 +162,6 @@ class ConnectDialog(QDialog):
         token = self.token_edit.text().strip()
         if not target:
             self.status.setText("⚠️ Paste a server URL (or local command) first.")
-            return
-
-        # Key-based servers (Composio et al.) need their key — no browser flow.
-        if (not token and target.startswith(("http://", "https://"))
-                and api_key_header_for(target)):
-            self.status.setText(
-                "⚠️ This server uses an API key — paste it in the field above "
-                "(Composio: dashboard.composio.dev).")
             return
 
         # Token given, or a local command → static config, no browser needed.

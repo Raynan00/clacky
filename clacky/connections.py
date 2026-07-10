@@ -92,11 +92,14 @@ def connected_servers() -> list[str]:
         return []
 
 
-def add_server(name: str, target: str, token: str | None = None) -> Path:
+def add_server(name: str, target: str, token: str | None = None,
+               force_bearer: bool = False) -> Path:
     """Write/merge one MCP server into the harness config and return its path.
 
     `target` is either a hosted server URL (https://…) or a local stdio
-    command line (e.g. "python -m mcp_server_fetch")."""
+    command line (e.g. "python -m mcp_server_fetch"). `force_bearer` marks
+    the token as an OAuth access token (Authorization: Bearer) even on hosts
+    that otherwise use an API-key header (Composio supports both)."""
     import yaml
 
     p = config_path()
@@ -110,7 +113,7 @@ def add_server(name: str, target: str, token: str | None = None) -> Path:
         # deadline makes hosted-server mounting a startup race (tools appear
         # some runs, vanish others).
         entry: dict = {"url": target, "connect_timeout": 60, "timeout": 180}
-        key_header = api_key_header_for(target)
+        key_header = None if force_bearer else api_key_header_for(target)
         if token and key_header:
             entry["headers"] = {key_header: token}
         elif token:
@@ -154,7 +157,7 @@ def connect_oauth(name: str, url: str, on_status=None) -> Path:
     state = _state_load()
     state.setdefault("oauth", {})[name] = {"url": url, **bundle}
     _state_save(state)
-    return add_server(name, url, bundle["access_token"])
+    return add_server(name, url, bundle["access_token"], force_bearer=True)
 
 
 def refresh_stale(max_age_slack_s: int = 0) -> None:
@@ -173,7 +176,8 @@ def refresh_stale(max_age_slack_s: int = 0) -> None:
             from . import oauth
             fresh = oauth.refresh(bundle)
             entries[name] = {"url": bundle.get("url", ""), **fresh}
-            add_server(name, bundle["url"], fresh["access_token"])
+            add_server(name, bundle["url"], fresh["access_token"],
+                       force_bearer=True)
             dirty = True
         except Exception:
             continue
