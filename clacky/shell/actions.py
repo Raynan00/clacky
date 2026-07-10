@@ -338,17 +338,21 @@ class ActionsMixin:
             if not shots:
                 return ""
             client = self._get_anthropic()
+            content = [{"type": "image", "source": {"type": "base64",
+                        "media_type": "image/jpeg", "data": s.base64_jpeg}}
+                       for s in shots[:3]]        # all monitors, like the tour
+            content.append(
+                {"type": "text", "text":
+                 f"The user just delegated this task while looking at "
+                 f"their screen{'s' if len(shots) > 1 else ''}: "
+                 f"\"{description}\". In 2-4 sentences, state what "
+                 f"they're looking at — app, page/document title, URL if "
+                 f"visible — and the specific content the task's "
+                 f"references point to. If one screen is clearly the "
+                 f"active one, describe that one."})
             resp = await client.messages.create(
                 model="claude-haiku-4-5-20251001", max_tokens=300,
-                messages=[{"role": "user", "content": [
-                    {"type": "image", "source": {"type": "base64",
-                     "media_type": "image/jpeg", "data": shots[0].base64_jpeg}},
-                    {"type": "text", "text":
-                     f"The user just delegated this task while looking at "
-                     f"this screen: \"{description}\". In 2-4 sentences, "
-                     f"state what they're looking at — app, page/document "
-                     f"title, URL if visible — and the specific content the "
-                     f"task's references point to."}]}])
+                messages=[{"role": "user", "content": content}])
             return " ".join(b.text for b in resp.content
                             if b.type == "text").strip()
         except Exception as e:
