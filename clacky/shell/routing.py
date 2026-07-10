@@ -149,10 +149,17 @@ class RoutingMixin:
                 sys_prompt += ("\n- workspace: read or send Gmail, or read Google "
                                "Calendar — the user has connected their Google "
                                "account, so prefer this for email/calendar.")
-            if self._memory.skills:
+            try:
+                import agent_skills
+                _names = [s.name for s in agent_skills.load_skills()]
+            except Exception:
+                _names = []
+            _names += [n for n in self._memory.skills if n not in
+                       {x.lower() for x in _names}]
+            if _names:
                 sys_prompt += ("\nKNOWN ROUTINES the user can run — route a request to "
                                "run any of these to 'act': "
-                               + ", ".join(f'"{n}"' for n in self._memory.skills) + ".")
+                               + ", ".join(f'"{n}"' for n in _names) + ".")
             route_enum = ["act", "walkthrough", "remember", "forget",
                           "learn_skill", "background", "organize", "undo", "chat"]
             if workspace_on:

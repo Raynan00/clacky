@@ -566,7 +566,15 @@ class ActionsMixin:
             "then STOP with a closing line and NO tool call, saying what's left for "
             "the user to confirm."
         )
-        mem, sk = self._memory.facts_block(), self._memory.skills_block()
+        # Skills: names+descriptions always (progressive disclosure); if this very
+        # request invokes a known skill, inject its FULL instructions.
+        import agent_skills
+        mem, sk = self._memory.facts_block(), agent_skills.names_block()
+        matched = agent_skills.find(instruction)
+        if matched:
+            sk += (f"\n\nTHE USER IS INVOKING THE SKILL \"{matched.name}\" — "
+                   f"follow these instructions:\n{matched.body}")
+            slog("SKILL", f"injected '{matched.name}' into agent task")
         if mem or sk:
             system += "\n\n" + "\n\n".join(x for x in (mem, sk) if x)
         launch_tool = {

@@ -303,6 +303,13 @@ class CompanionManager(RoutingMixin, TourMixin, ActionsMixin, QObject):
         # Cross-session memory + learned skills (~/.clacky/memory.json)
         from memory_store import MemoryStore
         self._memory = MemoryStore()
+        # Learned skills now live as SKILL.md files (agentskills.io standard);
+        # lift any legacy JSON routines into files once.
+        try:
+            import agent_skills
+            agent_skills.migrate_legacy(self._memory.skills)
+        except Exception:
+            pass
         # Background agents: id -> {desc, status, result, task}
         self._bg: dict[int, dict] = {}
         self._bg_counter = 0
@@ -871,7 +878,9 @@ class CompanionManager(RoutingMixin, TourMixin, ActionsMixin, QObject):
                 if route == "learn_skill":
                     name = (decision.get("skill_name") or "").strip()
                     steps = (decision.get("skill_steps") or "").strip()
-                    if self._memory.add_skill(name, steps):
+                    import agent_skills
+                    if agent_skills.save_skill(name, steps):
+                        self._memory.add_skill(name, steps)   # legacy index/backup
                         await self._reply_local(f"Learned it — I'll remember your {name}.")
                     else:
                         await self._reply_local(

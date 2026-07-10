@@ -61,8 +61,17 @@ def _task_workspace(task: str) -> Path:
 
 
 def _build_prompt(task: str, ws: Path) -> str:
+    skill_part = ""
+    try:
+        import agent_skills
+        m = agent_skills.find(task)
+        if m:
+            skill_part = (f"\n\nThis task invokes the user's skill "
+                          f"\"{m.name}\" — follow its instructions:\n{m.body}\n")
+    except Exception:
+        pass
     return (
-        f"You are Clacky's background worker. Task: {task}\n\n"
+        f"You are Clacky's background worker. Task: {task}{skill_part}\n\n"
         f"Work autonomously. Save any outputs — reports, lists, documents, "
         f"data — as files inside this folder: {ws}\n"
         f"Prefer a single well-named markdown file for research-style tasks.\n"
