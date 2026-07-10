@@ -106,13 +106,13 @@ def add_server(name: str, target: str, token: str | None = None) -> Path:
     servers = cfg.setdefault("mcp_servers", {})
 
     if target.startswith(("http://", "https://")):
-        entry: dict = {"url": target}
+        # Remote servers get explicit patience — hermes' default connect
+        # deadline makes hosted-server mounting a startup race (tools appear
+        # some runs, vanish others).
+        entry: dict = {"url": target, "connect_timeout": 60, "timeout": 180}
         key_header = api_key_header_for(target)
         if token and key_header:
             entry["headers"] = {key_header: token}
-            # Composio brokers to the real app behind this URL — give it room.
-            entry["connect_timeout"] = 60
-            entry["timeout"] = 180
         elif token:
             entry["headers"] = {"Authorization": f"Bearer {token}"}
     else:
@@ -120,6 +120,15 @@ def add_server(name: str, target: str, token: str | None = None) -> Path:
         entry = {"command": cmd[0], "args": cmd[1:]}
 
     servers[name] = entry
+    # Hermes waits only mcp_discovery_timeout (default 1.5s!) for MCP servers
+    # before the session's first tool snapshot — remote handshakes take ~3s+,
+    # so hosted servers lose the race and their tools silently never appear.
+    # 30 caps the wait; it only ever blocks for real connect time.
+    try:
+        if float(cfg.get("mcp_discovery_timeout") or 0) < 30:
+            cfg["mcp_discovery_timeout"] = 30
+    except (TypeError, ValueError):
+        cfg["mcp_discovery_timeout"] = 30
     # Hermes' one-shot CLI sessions only mount MCP servers that are named
     # EXPLICITLY in the platform toolset list (it resolves 'cli' with
     # include_default_mcp_servers=False) — without this, connected apps exist
