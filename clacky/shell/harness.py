@@ -69,7 +69,7 @@ def _connected_servers() -> list[str]:
         return []
 
 
-def _build_prompt(task: str, ws: Path) -> str:
+def _build_prompt(task: str, ws: Path, context: str = "") -> str:
     skill_part = ""
     try:
         import agent_skills
@@ -99,8 +99,15 @@ def _build_prompt(task: str, ws: Path) -> str:
             f"files here instead, and say in your summary that the app isn't "
             f"connected yet and that running 'clacky connect' would wire it "
             f"up.\n")
+    context_part = ""
+    if context:
+        context_part = (
+            f"\nWhat the user was looking at when they asked (their screen, "
+            f"described for you — use it to resolve references like "
+            f"\"this\"): {context}\n")
     return (
-        f"You are Clacky's background worker. Task: {task}{skill_part}\n\n"
+        f"You are Clacky's background worker. Task: {task}{skill_part}\n"
+        f"{context_part}\n"
         f"Work autonomously. Save any outputs — reports, lists, documents, "
         f"data — as files inside this folder: {ws}\n"
         f"Prefer a single well-named markdown file for research-style tasks.\n"
@@ -111,10 +118,13 @@ def _build_prompt(task: str, ws: Path) -> str:
 
 
 async def run_background_task(task: str, timeout_s: int | None = None,
-                              ws: Path | None = None) -> HarnessResult:
+                              ws: Path | None = None,
+                              context: str = "") -> HarnessResult:
     """Run one task through the harness. Blocking work happens off-loop.
     Pass `ws` to continue in an existing workspace (e.g. finishing a delivery
-    whose files are already there).
+    whose files are already there); `context` carries a text description of
+    the user's screen for deictic tasks ("research this") — the harness has
+    no eyes, so the foreground's eyes translate.
 
     Env knobs: CLACKY_BG_MODEL (default claude-sonnet-5),
     CLACKY_BG_TIMEOUT seconds (default 600)."""
@@ -136,7 +146,7 @@ async def run_background_task(task: str, timeout_s: int | None = None,
 
     def _run() -> subprocess.CompletedProcess:
         return subprocess.run(
-            ["hermes", "-z", _build_prompt(task, ws),
+            ["hermes", "-z", _build_prompt(task, ws, context),
              "--provider", "anthropic", "-m", model],
             capture_output=True, text=True, timeout=timeout_s,
             cwd=str(ws),

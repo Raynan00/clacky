@@ -251,6 +251,10 @@ class ActionsMixin:
         the builtin web-research summary if no harness is installed."""
         try:
             import harness
+            # If the task points at the screen ("research this"), resolve the
+            # reference now — the background lane is blind, so the
+            # foreground's eyes translate it into text first.
+            ctx = await self._screen_context(description)
             if harness.harness_available():
                 # Cowork-style pre-flight: if the task wants to deliver into an
                 # app that isn't connected, offer to wire it up right now.
@@ -258,7 +262,7 @@ class ActionsMixin:
                 app = await self._missing_delivery_app(description)
                 if app:
                     await self._offer_connection(app)
-                res = await harness.run_background_task(description)
+                res = await harness.run_background_task(description, context=ctx)
                 self._bg[tid].update(status="done" if res.ok else "error",
                                      result=res.summary)
                 report = res.summary
@@ -296,6 +300,9 @@ class ActionsMixin:
                 if res.ok and res.artifacts and res.workspace:
                     harness.open_workspace(res.workspace)
                 return
+            if ctx:
+                description = (f"{description}\n\n(What the user was looking "
+                               f"at when they asked: {ctx})")
             result = await self._research_agent(description)
             self._bg[tid].update(status="done", result=result)
             # Just-in-time upsell (once per session): the user just experienced the
@@ -311,6 +318,42 @@ class ActionsMixin:
             self._bg[tid].update(status="error")
             result = "I ran into a problem looking into that."
         await self._bg_report(tid, result)
+
+    # Delegated tasks that point at the screen — "research this", "look into
+    # what I'm reading" — need the reference resolved before handoff, because
+    # the background harness has no eyes.
+    _DEIXIS_RE = re.compile(
+        r"\b(this|that|these|those)\b|"
+        r"\bwhat i'?m (looking at|reading|watching)\b|"
+        r"\bon (my|the) screen\b", re.IGNORECASE)
+
+    async def _screen_context(self, description: str) -> str:
+        """One cheap vision call: describe what the user is looking at, as
+        text the blind background lane can carry. Empty string if the task
+        doesn't reference the screen (or anything fails)."""
+        if not self._DEIXIS_RE.search(description):
+            return ""
+        try:
+            shots = capture_all_screens()
+            if not shots:
+                return ""
+            client = self._get_anthropic()
+            resp = await client.messages.create(
+                model="claude-haiku-4-5-20251001", max_tokens=300,
+                messages=[{"role": "user", "content": [
+                    {"type": "image", "source": {"type": "base64",
+                     "media_type": "image/jpeg", "data": shots[0].base64_jpeg}},
+                    {"type": "text", "text":
+                     f"The user just delegated this task while looking at "
+                     f"this screen: \"{description}\". In 2-4 sentences, "
+                     f"state what they're looking at — app, page/document "
+                     f"title, URL if visible — and the specific content the "
+                     f"task's references point to."}]}])
+            return " ".join(b.text for b in resp.content
+                            if b.type == "text").strip()
+        except Exception as e:
+            print("[clacky-debug] screen-context error:", e, flush=True)
+            return ""
 
     @staticmethod
     def _pending_auth(artifacts) -> tuple[str, str] | None:

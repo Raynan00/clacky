@@ -79,6 +79,8 @@ A small buddy appears near your cursor and Clacky sits in the system tray.
 **Background agents** (work while you keep talking — and leave you files)
 - "Go research the best budget laptops and tell me later." → she reports back
   during a lull and opens a folder with a written report.
+- "Go research **this** and tell me later" works too — she looks at your
+  screen when you ask, so the background agent knows what "this" is.
 - Powered by an embedded [hermes-agent](https://github.com/nousresearch/hermes-agent)
   harness running on your same Anthropic key. **Included by default** in the
   source install (except on Python 3.14, which Hermes doesn't support yet).
