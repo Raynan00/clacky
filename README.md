@@ -58,7 +58,7 @@ Whisper). A first-run setup wizard collects both — links included.
 3. The setup wizard walks you through your keys
 4. **Hold `Ctrl+Alt+M`, say *"what's on my screen?"*, and release** 🧤
 
-### Option 2 — Run from source *(Python 3.10+)*
+### Option 2 — Run from source *(Python 3.11+)*
 
 ```powershell
 git clone https://github.com/Raynan00/clacky.git
@@ -67,8 +67,9 @@ pip install -e ".[shell,claude]"
 clacky run
 ```
 
-Background agents — the ones that leave you files — are included by default
-(Python 3.11+; on 3.10 she falls back to spoken summaries).
+Background agents — the ones that leave you files — are included by default.
+(One caveat: Hermes doesn't support Python 3.14 yet, so on 3.14 she falls
+back to spoken summaries until it does.)
 
 Keys: let the wizard collect them, or copy `.env.example` → `clacky/shell/.env`:
 

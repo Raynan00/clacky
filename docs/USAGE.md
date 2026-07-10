@@ -10,7 +10,7 @@ out of trouble. For the file organizer, see [CLI.md](CLI.md).
 
 ## 1. Install
 
-Requires **Windows 10/11** and **Python 3.10+**.
+Requires **Windows 10/11** and **Python 3.11+**.
 
 ```powershell
 git clone <your-repo-url> clacky
@@ -78,8 +78,9 @@ A small buddy appears near your cursor and Clacky sits in the system tray.
   during a lull and opens a folder with a written report.
 - Powered by an embedded [hermes-agent](https://github.com/nousresearch/hermes-agent)
   harness running on your same Anthropic key. **Included by default** in the
-  source install (Python 3.11+). `.exe` users: install Hermes once
-  (`pip install hermes-agent` with any Python 3.11+, or Nous's installer) —
+  source install (except on Python 3.14, which Hermes doesn't support yet).
+  `.exe` users: install Hermes once
+  (`pip install hermes-agent` with any Python 3.11–3.13, or Nous's installer) —
   Clacky finds it on PATH automatically, no config. Without it, background
   tasks fall back to a spoken web-research summary — and Clacky will tell you
   once, at the moment it would have helped, how to upgrade.

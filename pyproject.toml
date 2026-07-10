@@ -3,7 +3,7 @@ name = "clacky"
 version = "0.1.0"
 description = "The open-source Windows agent companion — autonomous, but you can take it back."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "MIT" }
 # No required runtime deps — Ollama works with the stdlib. Install a provider
 # extra for cloud models.
@@ -20,7 +20,7 @@ google = ["google-api-python-client>=2.0", "google-auth-oauthlib>=1.0"]
 # run through hermes-agent and produce real files. Runs on your same Anthropic
 # key. Already included in [shell] — this standalone extra exists for minimal
 # installs that want only the harness.
-background = ["hermes-agent>=0.18; python_version >= '3.11'"]
+background = ["hermes-agent>=0.18; python_version < '3.14'"]
 dev = ["pytest>=8.0"]
 # The companion shell (vendored from Bitshank under clacky/shell/). Core deps to
 # launch voice + screen + pointing on the free Ollama path. Premium/optional
@@ -44,9 +44,9 @@ shell = [
     "uiautomation>=2.0.18",   # Tier-1 pixel-perfect pointing (Windows UIA)
     "pynput>=1.7.7",          # Phase-2 actuation + workflow capture
     # Background agents are on by default: "go research X and tell me later"
-    # leaves real files. Hermes needs 3.11+; on 3.10 Clacky quietly falls back
-    # to spoken research summaries.
-    "hermes-agent>=0.18; python_version >= '3.11'",
+    # leaves real files. Hermes doesn't support 3.14 yet — the marker keeps the
+    # install working there (Clacky falls back to spoken research summaries).
+    "hermes-agent>=0.18; python_version < '3.14'",
 ]
 
 [project.scripts]
