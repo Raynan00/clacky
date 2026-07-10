@@ -85,7 +85,8 @@ A small buddy appears near your cursor and Clacky sits in the system tray.
   harness running on your same Anthropic key. **Included by default** in the
   source install (except on Python 3.14, which Hermes doesn't support yet).
   `.exe` users: install Hermes once
-  (`pip install hermes-agent` with any Python 3.11–3.13, or Nous's installer) —
+  (`pip install hermes-agent ddgs` with any Python 3.11–3.13, or Nous's
+  installer) —
   Clacky finds it on PATH automatically, no config. Without it, background
   tasks fall back to a spoken web-research summary — and Clacky will tell you
   once, at the moment it would have helped, how to upgrade.
@@ -189,7 +190,7 @@ override the built-ins.
 | `CLACKY_MOVE_STAGGER` | `0.12` | Seconds between file moves during organize/undo (`0` = instant) |
 | `CLACKY_ORGANIZE_MODEL` | Haiku | Model that plans folder cleanups |
 | `CLACKY_BG_MODEL` | `claude-sonnet-5` | Model background agents run on |
-| `CLACKY_BG_TIMEOUT` | `600` | Max seconds per background task |
+| `CLACKY_BG_TIMEOUT` | `900` | Max seconds per background task (partial files are kept on timeout) |
 
 Spend note: Clacky never limits what you can ask of her — background tasks run
 on your key at your discretion. If you want hard spend caps, set them where

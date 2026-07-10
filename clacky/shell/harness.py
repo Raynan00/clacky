@@ -32,6 +32,15 @@ from session_log import slog
 
 _BG_ROOT = Path.home() / ".clacky" / "background"
 
+# Secrets the background agent has no business inheriting (its terminal and
+# browser touch the open web; a prompt-injected page must find nothing).
+_KEEP_PRIVATE = {
+    "DEEPGRAM_API_KEY", "OPENAI_API_KEY", "GOOGLE_API_KEY",
+    "ELEVENLABS_API_KEY", "TAVILY_API_KEY",
+    "VSCODE_GIT_IPC_AUTH_TOKEN", "VSCODE_GIT_ASKPASS_MAIN",
+    "VSCODE_GIT_ASKPASS_NODE",
+}
+
 
 @dataclass
 class HarnessResult:
@@ -140,9 +149,14 @@ async def run_background_task(task: str, timeout_s: int | None = None,
 
     ws = ws or _task_workspace(task)
     model = os.environ.get("CLACKY_BG_MODEL", "claude-sonnet-5")
-    timeout_s = timeout_s or int(os.environ.get("CLACKY_BG_TIMEOUT", "600"))
+    timeout_s = timeout_s or int(os.environ.get("CLACKY_BG_TIMEOUT", "900"))
     slog("BG", f"harness task starting (model={model}): {task[:60]!r}")
     t0 = time.perf_counter()
+
+    # The harness only needs the Anthropic key — the rest of Clacky's secrets
+    # (Deepgram, editor IPC tokens, …) must not leak into an agent whose
+    # terminal reads the web.
+    env = {k: v for k, v in os.environ.items() if k not in _KEEP_PRIVATE}
 
     def _run() -> subprocess.CompletedProcess:
         # CREATE_NO_WINDOW: hermes and its whole child tree (terminal tool,
@@ -153,15 +167,20 @@ async def run_background_task(task: str, timeout_s: int | None = None,
             ["hermes", "-z", _build_prompt(task, ws, context),
              "--provider", "anthropic", "-m", model],
             capture_output=True, text=True, timeout=timeout_s,
-            cwd=str(ws), creationflags=flags,
+            cwd=str(ws), creationflags=flags, env=env,
         )
 
     try:
         proc = await asyncio.to_thread(_run)
     except subprocess.TimeoutExpired:
-        slog("BG", f"harness task TIMED OUT after {timeout_s}s")
-        return HarnessResult(False, "that background task ran too long, so I stopped it",
-                             workspace=ws)
+        # Salvage whatever it finished — a killed task's files are still files.
+        arts = sorted(p for p in ws.rglob("*") if p.is_file())
+        slog("BG", f"harness task TIMED OUT after {timeout_s}s "
+                   f"(salvaged {len(arts)} artifact(s))")
+        return HarnessResult(False,
+                             "that background task ran long and I had to stop it"
+                             + (" — I kept what it finished" if arts else ""),
+                             workspace=ws, artifacts=arts)
     except Exception as e:
         slog("BG", f"harness task failed to run: {e}")
         return HarnessResult(False, "I couldn't start that background task", workspace=ws)

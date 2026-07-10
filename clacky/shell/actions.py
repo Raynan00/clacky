@@ -266,7 +266,7 @@ class ActionsMixin:
                 self._bg[tid].update(status="done" if res.ok else "error",
                                      result=res.summary)
                 report = res.summary
-                if res.ok and res.artifacts:
+                if res.artifacts:
                     n = len(res.artifacts)
                     report += (f" I saved {n} file{'s' if n != 1 else ''} for you — "
                                "opening the folder now.")
@@ -297,7 +297,7 @@ class ActionsMixin:
                                    f"not from a source I recognize, so look "
                                    f"before you click it.")
                 await self._bg_report(tid, report)
-                if res.ok and res.artifacts and res.workspace:
+                if res.artifacts and res.workspace:
                     harness.open_workspace(res.workspace)
                 return
             if ctx:
