@@ -52,7 +52,7 @@ Whisper). A first-run setup wizard collects both — links included.
 
 ### Option 1 — Download the app *(no Python needed)*
 
-1. Grab **`Clacky-v0.1.0-windows.zip`** from [**Releases**](https://github.com/Raynan00/clacky/releases/latest)
+1. Grab **`Clacky-v0.2.0-windows.zip`** from [**Releases**](https://github.com/Raynan00/clacky/releases/latest)
 2. Extract anywhere and run `Clacky.exe`
    *(the exe is unsigned, so SmartScreen may warn on first run — "More info → Run anyway")*
 3. The setup wizard walks you through your keys

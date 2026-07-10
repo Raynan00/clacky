@@ -272,14 +272,26 @@ class ActionsMixin:
                 pending = self._pending_auth(res.artifacts) if res.ok else None
                 if pending:
                     app, auth_url = pending
-                    import webbrowser
-                    webbrowser.open(auth_url)
-                    report += (f" One more thing — {app} needs a one-time "
-                               f"approval, and I just opened it in your "
-                               f"browser. Approve it there and I'll finish "
-                               f"the delivery myself.")
-                    asyncio.create_task(self._finish_delivery(
-                        tid, app, res.workspace, description))
+                    # Only auto-open (and vouch for) hosts we trust — the URL
+                    # was written by an agent that browses the open web, and
+                    # "Clacky opened it + told me to approve" must never be
+                    # spendable by a prompt-injected page.
+                    from urllib.parse import urlsplit
+                    host = urlsplit(auth_url).netloc.lower()
+                    if host == "composio.dev" or host.endswith(".composio.dev"):
+                        import webbrowser
+                        webbrowser.open(auth_url)
+                        report += (f" One more thing — {app} needs a one-time "
+                                   f"approval, and I just opened it in your "
+                                   f"browser. Approve it there and I'll finish "
+                                   f"the delivery myself.")
+                        asyncio.create_task(self._finish_delivery(
+                            tid, app, res.workspace, description))
+                    else:
+                        report += (f" It says {app} wants an authorization — "
+                                   f"I left the link in the folder, but it's "
+                                   f"not from a source I recognize, so look "
+                                   f"before you click it.")
                 await self._bg_report(tid, report)
                 if res.ok and res.artifacts and res.workspace:
                     harness.open_workspace(res.workspace)
@@ -323,17 +335,21 @@ class ActionsMixin:
         import harness
         for delay in (75, 150):
             await asyncio.sleep(delay)
-            res = await harness.run_background_task(
-                f"Earlier task: {description}\n"
-                f"The output files are already saved in your working folder — "
-                f"do NOT redo that work. The user has just authorized {app}, "
-                f"so complete ONLY the delivery to {app} using those existing "
-                f"files. If the delivery succeeds, delete the CONNECT-{app}.txt "
-                f"file. If {app} still isn't authorized, leave that file alone "
-                f"and stop.",
-                ws=ws)
-            still_pending = any(p.name.lower() == f"connect-{app}.txt"
-                                for p in ws.iterdir())
+            try:
+                res = await harness.run_background_task(
+                    f"Earlier task: {description}\n"
+                    f"The output files are already saved in your working folder — "
+                    f"do NOT redo that work. The user has just authorized {app}, "
+                    f"so complete ONLY the delivery to {app} using those existing "
+                    f"files. If the delivery succeeds, delete the CONNECT-{app}.txt "
+                    f"file. If {app} still isn't authorized, leave that file alone "
+                    f"and stop.",
+                    ws=ws)
+                still_pending = any(p.name.lower() == f"connect-{app}.txt"
+                                    for p in ws.iterdir())
+            except Exception as e:
+                print("[clacky-debug] finish-delivery error:", e, flush=True)
+                break
             if res.ok and not still_pending:
                 self._bg[tid]["result"] = res.summary
                 await self._bg_report(tid, f"done — that's in your {app} now.")
