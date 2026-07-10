@@ -102,8 +102,9 @@ Apps with official hosted servers (Notion, Linear, Sentry, GitHub, Hugging
 Face) need zero typing — Clacky knows their URLs. And for the entire long
 tail, connect [Composio](https://composio.dev) once: one API key from
 [dashboard.composio.dev](https://dashboard.composio.dev) gives her **1000+
-apps** — when a task needs one you haven't authorized yet, Composio hands
-back a link, Clacky saves it in the task folder, you click it once.
+apps**. The first time a task touches an app you haven't authorized yet,
+Clacky opens the approval in your browser — click Approve and she finishes
+the delivery herself. Every later ask is fully hands-free.
 
 You can also connect ahead of time:
 

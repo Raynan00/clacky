@@ -110,8 +110,11 @@ def _build_prompt(task: str, ws: Path) -> str:
     )
 
 
-async def run_background_task(task: str, timeout_s: int | None = None) -> HarnessResult:
+async def run_background_task(task: str, timeout_s: int | None = None,
+                              ws: Path | None = None) -> HarnessResult:
     """Run one task through the harness. Blocking work happens off-loop.
+    Pass `ws` to continue in an existing workspace (e.g. finishing a delivery
+    whose files are already there).
 
     Env knobs: CLACKY_BG_MODEL (default claude-sonnet-5),
     CLACKY_BG_TIMEOUT seconds (default 600)."""
@@ -125,7 +128,7 @@ async def run_background_task(task: str, timeout_s: int | None = None) -> Harnes
     except Exception:
         pass
 
-    ws = _task_workspace(task)
+    ws = ws or _task_workspace(task)
     model = os.environ.get("CLACKY_BG_MODEL", "claude-sonnet-5")
     timeout_s = timeout_s or int(os.environ.get("CLACKY_BG_TIMEOUT", "600"))
     slog("BG", f"harness task starting (model={model}): {task[:60]!r}")

@@ -266,6 +266,20 @@ class ActionsMixin:
                     n = len(res.artifacts)
                     report += (f" I saved {n} file{'s' if n != 1 else ''} for you — "
                                "opening the folder now.")
+                # A CONNECT-<app>.txt artifact means a delivery is waiting on a
+                # one-time app approval — surface it like the OAuth flow does:
+                # open the browser now, then finish the delivery ourselves.
+                pending = self._pending_auth(res.artifacts) if res.ok else None
+                if pending:
+                    app, auth_url = pending
+                    import webbrowser
+                    webbrowser.open(auth_url)
+                    report += (f" One more thing — {app} needs a one-time "
+                               f"approval, and I just opened it in your "
+                               f"browser. Approve it there and I'll finish "
+                               f"the delivery myself.")
+                    asyncio.create_task(self._finish_delivery(
+                        tid, app, res.workspace, description))
                 await self._bg_report(tid, report)
                 if res.ok and res.artifacts and res.workspace:
                     harness.open_workspace(res.workspace)
@@ -285,6 +299,49 @@ class ActionsMixin:
             self._bg[tid].update(status="error")
             result = "I ran into a problem looking into that."
         await self._bg_report(tid, result)
+
+    @staticmethod
+    def _pending_auth(artifacts) -> tuple[str, str] | None:
+        """(app, url) from a CONNECT-<app>.txt the harness left, else None."""
+        for p in artifacts:
+            m = re.match(r"connect-(.+)\.txt$", p.name.lower())
+            if not m:
+                continue
+            try:
+                text = p.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+            u = re.search(r"https?://\S+", text)
+            if u:
+                return m.group(1), u.group(0)
+        return None
+
+    async def _finish_delivery(self, tid: int, app: str, ws, description: str):
+        """The user is approving <app> in their browser right now. Quietly
+        retry just the delivery step in the same workspace until Composio
+        goes through — so the approval click is the user's ONLY action."""
+        import harness
+        for delay in (75, 150):
+            await asyncio.sleep(delay)
+            res = await harness.run_background_task(
+                f"Earlier task: {description}\n"
+                f"The output files are already saved in your working folder — "
+                f"do NOT redo that work. The user has just authorized {app}, "
+                f"so complete ONLY the delivery to {app} using those existing "
+                f"files. If the delivery succeeds, delete the CONNECT-{app}.txt "
+                f"file. If {app} still isn't authorized, leave that file alone "
+                f"and stop.",
+                ws=ws)
+            still_pending = any(p.name.lower() == f"connect-{app}.txt"
+                                for p in ws.iterdir())
+            if res.ok and not still_pending:
+                self._bg[tid]["result"] = res.summary
+                await self._bg_report(tid, f"done — that's in your {app} now.")
+                return
+        await self._bg_report(
+            tid, f"I couldn't finish the {app} delivery — your files are all "
+                 f"in the task folder, and the approval link is there too if "
+                 f"you want to give it another shot.")
 
     async def _missing_delivery_app(self, description: str) -> str | None:
         """Does this task ask to deliver output into a named app that isn't
