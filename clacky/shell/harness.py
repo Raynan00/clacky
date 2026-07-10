@@ -145,11 +145,15 @@ async def run_background_task(task: str, timeout_s: int | None = None,
     t0 = time.perf_counter()
 
     def _run() -> subprocess.CompletedProcess:
+        # CREATE_NO_WINDOW: hermes and its whole child tree (terminal tool,
+        # node/powershell helpers) attach to an invisible console — otherwise
+        # background tasks pop blank console windows over the user's work.
+        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         return subprocess.run(
             ["hermes", "-z", _build_prompt(task, ws, context),
              "--provider", "anthropic", "-m", model],
             capture_output=True, text=True, timeout=timeout_s,
-            cwd=str(ws),
+            cwd=str(ws), creationflags=flags,
         )
 
     try:
