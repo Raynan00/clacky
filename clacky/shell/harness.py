@@ -98,9 +98,10 @@ def _build_prompt(task: str, ws: Path, context: str = "") -> str:
             f"an app that isn't directly connected, reach it through Composio's "
             f"tools. If Composio says the app needs authorizing first, save the "
             f"authorization link it gives you into a file here named "
-            f"CONNECT-<app>.txt, still save the output as files, and mention "
-            f"the link file in your summary — never claim a delivery you "
-            f"didn't make.\n")
+            f"CONNECT-<app>.txt, still save the output as files, then END YOUR "
+            f"TURN immediately — never wait or poll for the user to authorize; "
+            f"a follow-up task completes the delivery. Never claim a delivery "
+            f"you didn't make.\n")
     else:
         apps_part = (
             f"Connected external apps (MCP servers): {connected}. If the task "
