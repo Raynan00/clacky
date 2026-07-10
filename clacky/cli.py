@@ -113,7 +113,15 @@ def _cmd_connect(args) -> int:
         return 2
 
     token = args.token
-    if not token and target.startswith(("http://", "https://")):
+    is_url = target.startswith(("http://", "https://"))
+    if not token and is_url and connections.api_key_header_for(target):
+        # Key-based servers (Composio et al.) — no browser flow, just the key.
+        token = input("API key for this server "
+                      "(Composio: dashboard.composio.dev): ").strip()
+        if not token:
+            print("Clacky: this server needs an API key.", file=sys.stderr)
+            return 2
+    elif not token and is_url:
         # Browser sign-in first — approve in the browser, no token hunting.
         try:
             connections.connect_oauth(name, target,

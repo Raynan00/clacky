@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit
 )
 
-from clacky.connections import known_app_url
+from clacky.connections import api_key_header_for, known_app_url
 
 
 class ConnectDialog(QDialog):
@@ -76,16 +76,22 @@ class ConnectDialog(QDialog):
         layout.addWidget(title)
 
         known = known_app_url(app_name)
+        if known and api_key_header_for(known):
+            how = (f'Paste your API key from '
+                   f'<a href="https://dashboard.composio.dev" '
+                   f'style="color:#2f7fff">dashboard.composio.dev</a> — one key '
+                   f"connects her to 1000+ apps at once.")
+        elif known:
+            how = ("Connect signs you in with your browser — approve it there "
+                   "and the task carries on with real delivery.")
+        else:
+            how = (f"Paste its MCP server URL (for hosted apps, "
+                   f'<a href="https://composio.dev" style="color:#2f7fff">composio.dev</a> '
+                   f"has one for most) and Connect signs you in with your "
+                   f"browser when the server supports it.")
         subtitle = QLabel(
             f"This task wants to deliver its output into <b>{app_name}</b>, "
-            f"which isn't linked to Clacky's background agents yet. "
-            + ("Connect signs you in with your browser — approve it there and "
-               "the task carries on with real delivery."
-               if known else
-               f"Paste its MCP server URL (for hosted apps, "
-               f'<a href="https://composio.dev" style="color:#2f7fff">composio.dev</a> '
-               f"has one for most) and Connect signs you in with your browser "
-               f"when the server supports it.")
+            f"which isn't linked to Clacky's background agents yet. " + how
             + " Or skip, and she'll leave you files instead."
         )
         subtitle.setObjectName("subtitle")
@@ -145,6 +151,14 @@ class ConnectDialog(QDialog):
         token = self.token_edit.text().strip()
         if not target:
             self.status.setText("⚠️ Paste a server URL (or local command) first.")
+            return
+
+        # Key-based servers (Composio et al.) need their key — no browser flow.
+        if (not token and target.startswith(("http://", "https://"))
+                and api_key_header_for(target)):
+            self.status.setText(
+                "⚠️ This server uses an API key — paste it in the field above "
+                "(Composio: dashboard.composio.dev).")
             return
 
         # Token given, or a local command → static config, no browser needed.

@@ -81,16 +81,30 @@ def _build_prompt(task: str, ws: Path) -> str:
         pass
     servers = _connected_servers()
     connected = ", ".join(servers) if servers else "none"
+    if "composio" in servers:
+        apps_part = (
+            f"Connected external apps (MCP servers): {connected}. Composio "
+            f"brokers 1000+ apps (Notion, Slack, Sheets, …): if the task names "
+            f"an app that isn't directly connected, reach it through Composio's "
+            f"tools. If Composio says the app needs authorizing first, save the "
+            f"authorization link it gives you into a file here named "
+            f"CONNECT-<app>.txt, still save the output as files, and mention "
+            f"the link file in your summary — never claim a delivery you "
+            f"didn't make.\n")
+    else:
+        apps_part = (
+            f"Connected external apps (MCP servers): {connected}. If the task "
+            f"asks you to deliver output to an app that is NOT connected, do "
+            f"not attempt it and never claim you did — save the output as "
+            f"files here instead, and say in your summary that the app isn't "
+            f"connected yet and that running 'clacky connect' would wire it "
+            f"up.\n")
     return (
         f"You are Clacky's background worker. Task: {task}{skill_part}\n\n"
         f"Work autonomously. Save any outputs — reports, lists, documents, "
         f"data — as files inside this folder: {ws}\n"
         f"Prefer a single well-named markdown file for research-style tasks.\n"
-        f"Connected external apps (MCP servers): {connected}. If the task asks "
-        f"you to deliver output to an app that is NOT connected, do not attempt "
-        f"it and never claim you did — save the output as files here instead, "
-        f"and say in your summary that the app isn't connected yet and that "
-        f"running 'clacky connect' would wire it up.\n"
+        + apps_part +
         f"When done, reply with a SHORT spoken-style summary (2-3 sentences, "
         f"for the ear: no paths, no markdown) of what you found or did."
     )

@@ -292,7 +292,12 @@ class ActionsMixin:
         connected list. Returns the missing app's name, or None."""
         try:
             from clacky.connections import connected_servers
-            connected = ", ".join(connected_servers()) or "none"
+            servers = connected_servers()
+            if "composio" in servers:
+                # Composio brokers 1000+ apps — nothing counts as missing; the
+                # agent connects apps through it at runtime (auth link if new).
+                return None
+            connected = ", ".join(servers) or "none"
             client = self._get_anthropic()
             resp = await client.messages.create(
                 model="claude-haiku-4-5-20251001", max_tokens=20,

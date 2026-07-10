@@ -25,7 +25,25 @@ KNOWN_APPS = {
     "sentry": "https://mcp.sentry.dev/mcp",
     "github": "https://api.githubcopilot.com/mcp/",
     "huggingface": "https://huggingface.co/mcp",
+    # The long tail: Composio's Connect MCP is one fixed URL for everyone —
+    # only the API key (dashboard.composio.dev) is yours. Connecting it gives
+    # background agents 1000+ apps; Composio handles each app's auth at
+    # runtime by handing back an authorization link.
+    "composio": "https://connect.composio.dev/mcp",
 }
+
+
+def api_key_header_for(url: str) -> str | None:
+    """Some hosted servers authenticate with a static API key header instead
+    of browser sign-in. Returns the header name, or None for OAuth/Bearer."""
+    try:
+        from urllib.parse import urlsplit
+        host = urlsplit(url).netloc.lower()
+    except Exception:
+        return None
+    if host == "composio.dev" or host.endswith(".composio.dev"):
+        return "x-consumer-api-key"
+    return None
 
 
 def config_path() -> Path:
@@ -80,7 +98,13 @@ def add_server(name: str, target: str, token: str | None = None) -> Path:
 
     if target.startswith(("http://", "https://")):
         entry: dict = {"url": target}
-        if token:
+        key_header = api_key_header_for(target)
+        if token and key_header:
+            entry["headers"] = {key_header: token}
+            # Composio brokers to the real app behind this URL — give it room.
+            entry["connect_timeout"] = 60
+            entry["timeout"] = 180
+        elif token:
             entry["headers"] = {"Authorization": f"Bearer {token}"}
     else:
         cmd = target.split()

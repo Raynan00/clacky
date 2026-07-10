@@ -96,14 +96,17 @@ uses; Clacky renews the tokens herself). Skip instead, and she leaves you
 files. Never a gate.
 
 Apps with official hosted servers (Notion, Linear, Sentry, GitHub, Hugging
-Face) need zero typing — Clacky knows their URLs. Anything else, paste the
-server URL; if it doesn't do browser sign-in (e.g. Composio's per-user
-URLs), a token field is right there.
+Face) need zero typing — Clacky knows their URLs. And for the entire long
+tail, connect [Composio](https://composio.dev) once: one API key from
+[dashboard.composio.dev](https://dashboard.composio.dev) gives her **1000+
+apps** — when a task needs one you haven't authorized yet, Composio hands
+back a link, Clacky saves it in the task folder, you click it once.
 
 You can also connect ahead of time:
 
 ```powershell
 clacky connect notion     # opens your browser to approve — that's the whole flow
+clacky connect composio   # paste your API key — unlocks 1000+ apps at once
 clacky connect            # or interactive: name + URL/command (+ token if needed)
 ```
 
