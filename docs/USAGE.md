@@ -15,7 +15,7 @@ Requires **Windows 10/11** and **Python 3.10+**.
 ```powershell
 git clone <your-repo-url> clacky
 cd clacky
-pip install -e ".[shell,claude]"
+pip install -e ".[shell,claude,background]"
 ```
 
 This pulls the shell dependencies (PyQt6, sounddevice, mss, uiautomation, edge-tts,

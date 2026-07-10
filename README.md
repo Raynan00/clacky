@@ -63,9 +63,11 @@ Whisper). A first-run setup wizard collects both — links included.
 ```powershell
 git clone https://github.com/Raynan00/clacky.git
 cd clacky
-pip install -e ".[shell,claude]"
+pip install -e ".[shell,claude,background]"
 clacky run
 ```
+
+(`background` gives her agents that leave you files — drop it for a lighter install.)
 
 Keys: let the wizard collect them, or copy `.env.example` → `clacky/shell/.env`:
 

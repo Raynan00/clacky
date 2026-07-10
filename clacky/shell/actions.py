@@ -266,6 +266,14 @@ class ActionsMixin:
                 return
             result = await self._research_agent(description)
             self._bg[tid].update(status="done", result=result)
+            # Just-in-time upsell (once per session): the user just experienced the
+            # light lane — tell them the good one exists and how to get it.
+            if not getattr(self, "_bg_hint_given", False):
+                self._bg_hint_given = True
+                result += (" By the way — if you install my background engine, "
+                           "next time I'll hand you actual files instead of just "
+                           "telling you. It's one install; see the usage guide "
+                           "under background agents.")
         except Exception as e:
             print("[clacky-debug] bg worker error:", e, flush=True)
             self._bg[tid].update(status="error")
