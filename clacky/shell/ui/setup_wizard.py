@@ -144,6 +144,19 @@ class SetupWizard(QDialog):
         self.deepgram_edit.setEchoMode(QLineEdit.EchoMode.Password)
         self.deepgram_edit.setStyleSheet(self.anthropic_edit.styleSheet())
         kb.addWidget(self.deepgram_edit)
+        lab3 = QLabel(
+            'Composio API key <span style="color:#a0a3a8">(optional — lets '
+            'background agents reach 1000+ apps: Notion, Slack, Sheets, …)</span> · '
+            '<a href="https://dashboard.composio.dev" '
+            'style="color:#2f7fff">get a key</a>')
+        lab3.setOpenExternalLinks(True)
+        kb.addWidget(lab3)
+        self.composio_edit = QLineEdit()
+        self.composio_edit.setPlaceholderText(
+            "optional — she'll also offer this the first time a task needs an app")
+        self.composio_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        self.composio_edit.setStyleSheet(self.anthropic_edit.styleSheet())
+        kb.addWidget(self.composio_edit)
         self.keys_box.hide()
         layout.addWidget(self.keys_box)
 
@@ -323,6 +336,7 @@ class SetupWizard(QDialog):
             self._pending_keys = {"ANTHROPIC_API_KEY": a_key,
                                   "DEEPGRAM_API_KEY": d_key,
                                   "CLACKY_ACTIVE_LLM": "claude"}
+            self._pending_composio = self.composio_edit.text().strip()
             self._set_step("validating_keys")
             self._start_key_check_worker(a_key, d_key)
 
@@ -469,6 +483,15 @@ class SetupWizard(QDialog):
         if s == "validating_keys":
             # Keys are good — persist them (frozen-safe path) + apply live.
             cfg.save_env_values(getattr(self, "_pending_keys", {}))
+            # Composio key (optional) goes to the background-agent config, not
+            # the .env — one paste here = 1000+ connected apps later.
+            ck = getattr(self, "_pending_composio", "")
+            if ck:
+                try:
+                    from clacky.connections import KNOWN_APPS, add_server
+                    add_server("composio", KNOWN_APPS["composio"], ck)
+                except Exception:
+                    pass    # never block setup on an optional extra
             self._set_step("done")
         elif s == "installing":
             self._goto_next_model_step()

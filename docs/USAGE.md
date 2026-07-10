@@ -38,7 +38,10 @@ CLACKY_HOTKEY=ctrl+alt+m
 
 Get keys: [console.anthropic.com](https://console.anthropic.com) ·
 [console.deepgram.com](https://console.deepgram.com) (free tier is plenty).
-On first run, a setup wizard can also collect these for you.
+On first run, a setup wizard collects these for you — plus an optional
+[Composio](https://dashboard.composio.dev) key that gives background agents
+1000+ connected apps (you can always add it later; Clacky offers it the
+first time a task needs an app).
 
 ## 3. Run
 
