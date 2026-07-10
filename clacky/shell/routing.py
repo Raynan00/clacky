@@ -63,14 +63,17 @@ class RoutingMixin:
         if re.match(r"(clacky[\s,]+)?"
                     r"(go(?!\s+(over|through|back))|agent|do it|just do it|"
                     r"go ahead|take over|handle (it|this)|make it happen)\b", s):
-            # …unless it's delegation: "go research X / look into X / …and tell
-            # me later" belongs to the background lane (harness + artifacts),
-            # not the on-screen agent. Delegation language outranks the trigger.
+            # Within the trigger, fast-route only the UNAMBIGUOUS cases; anything
+            # else falls through to the Haiku router (the authority) — the regexes
+            # here are latency shortcuts, never the last word on intent.
             if re.search(r"\b(research|look into|dig into)\b|"
                          r"\btell me (later|when)\b|\breport back\b|"
                          r"\bin the background\b", s):
-                return "background"
-            return "act"
+                return "background"       # clear delegation → harness lane
+            if re.search(r"\b(open|launch|start|click|press|type|play|search|"
+                         r"close|go to|navigate|run|do my)\b", s) or len(s) < 30:
+                return "act"              # clear on-screen action (or bare "do it")
+            return None                   # ambiguous "go …" → let the model decide
         # Folder cleanup → the journaled organizer (instant route). Requires BOTH a
         # cleanup verb and a folder word so "clean up my timeline" stays with chat.
         if (not re.match(r"(how|what|where|why)\b", s)
