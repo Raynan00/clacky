@@ -270,6 +270,18 @@ class ActionsMixin:
                     n = len(res.artifacts)
                     report += (f" I saved {n} file{'s' if n != 1 else ''} for you — "
                                "opening the folder now.")
+                # She delivered somewhere with a URL (Notion page, Sheet, …) —
+                # open it, but only on hosts we trust: the URL came from an
+                # agent that reads the open web.
+                opened_link = None
+                for link in (res.links or []):
+                    if self._trusted_app_link(link):
+                        opened_link = link
+                        break
+                if opened_link:
+                    import webbrowser
+                    webbrowser.open(opened_link)
+                    report += " I put it up in your browser too."
                 # A CONNECT-<app>.txt artifact means a delivery is waiting on a
                 # one-time app approval — surface it like the OAuth flow does:
                 # open the browser now, then finish the delivery ourselves.
@@ -368,6 +380,24 @@ class ActionsMixin:
         except Exception as e:
             print("[clacky-debug] screen-context error:", e, flush=True)
             return ""
+
+    # Hosts whose links she'll auto-open after a delivery — the apps she can
+    # actually deliver into. Everything else stays in the artifacts folder.
+    _TRUSTED_LINK_HOSTS = (
+        "notion.so", "notion.com", "docs.google.com", "sheets.google.com",
+        "drive.google.com", "linear.app", "github.com", "slack.com",
+        "huggingface.co", "composio.dev",
+    )
+
+    @classmethod
+    def _trusted_app_link(cls, url: str) -> bool:
+        try:
+            from urllib.parse import urlsplit
+            host = urlsplit(url).netloc.lower()
+        except Exception:
+            return False
+        return any(host == d or host.endswith("." + d)
+                   for d in cls._TRUSTED_LINK_HOSTS)
 
     @staticmethod
     def _pending_auth(artifacts) -> tuple[str, str] | None:

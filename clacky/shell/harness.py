@@ -48,6 +48,7 @@ class HarnessResult:
     summary: str                       # the harness's final text (for the ear)
     workspace: Path | None = None
     artifacts: list[Path] = field(default_factory=list)
+    links: list[str] = field(default_factory=list)   # URLs of delivered things
 
 
 def harness_available() -> bool:
@@ -122,7 +123,10 @@ def _build_prompt(task: str, ws: Path, context: str = "") -> str:
         f"Prefer a single well-named markdown file for research-style tasks.\n"
         + apps_part +
         f"When done, reply with a SHORT spoken-style summary (2-3 sentences, "
-        f"for the ear: no paths, no markdown) of what you found or did."
+        f"for the ear: no paths, no markdown). Speak in past tense about what "
+        f"you DID — never narrate plans, steps, tools, or what's 'connected'. "
+        f"If you created or updated something that has a URL (a page, doc, "
+        f"sheet), add one final line, exactly: LINK: <url>"
     )
 
 
@@ -185,14 +189,19 @@ async def run_background_task(task: str, timeout_s: int | None = None,
 
     dt = time.perf_counter() - t0
     artifacts = sorted(p for p in ws.rglob("*") if p.is_file())
+    # Pull LINK: lines out of the reply — they're for the browser, not the ear.
+    links = re.findall(r"^LINK:\s*(https?://\S+)\s*$", summary,
+                       re.IGNORECASE | re.MULTILINE)
+    summary = re.sub(r"^LINK:.*$", "", summary,
+                     flags=re.IGNORECASE | re.MULTILINE).strip()
     if len(summary) > 500:                # keep the spoken part tight
         summary = summary[:500].rsplit(".", 1)[0] + "."
     slog("BG", f"harness task done in {dt:.0f}s ok={ok} "
-               f"artifacts={len(artifacts)}")
+               f"artifacts={len(artifacts)} links={len(links)}")
     if not ok:
         return HarnessResult(False, summary or "the background task hit an error",
-                             ws, artifacts)
-    return HarnessResult(True, summary or "done", ws, artifacts)
+                             ws, artifacts, links)
+    return HarnessResult(True, summary or "done", ws, artifacts, links)
 
 
 def _ensure_config_model(model: str) -> None:

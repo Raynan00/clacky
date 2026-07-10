@@ -113,7 +113,12 @@ class _Session:
         my_id = self._id
         self._write({"jsonrpc": "2.0", "id": my_id, "method": method, "params": params})
         deadline = time.time() + timeout
-        chunks: list[str] = []
+        # The stream interleaves the agent's running commentary with tool
+        # calls. Only the text AFTER the last tool call is the actual answer —
+        # everything before is it thinking out loud ("now I'll push a copy…"),
+        # which must never reach the user's ears.
+        segments: list[list[str]] = [[]]
+        chunks = segments[0]
         while time.time() < deadline:
             try:
                 msg = self._inbox.get(timeout=2)
@@ -134,17 +139,24 @@ class _Session:
                 continue
             if m == "session/update":
                 u = (msg.get("params") or {}).get("update") or {}
-                if u.get("sessionUpdate") == "agent_message_chunk":
+                kind = u.get("sessionUpdate")
+                if kind == "agent_message_chunk":
                     c = u.get("content") or {}
                     if c.get("type") == "text":
                         chunks.append(c.get("text", ""))
+                elif kind in ("tool_call", "tool_call_update"):
+                    if chunks:                       # start a fresh segment
+                        segments.append([])
+                        chunks = segments[-1]
                 continue
             if m:                                   # other agent→client call
                 if "id" in msg:
                     self._write({"jsonrpc": "2.0", "id": msg["id"], "result": {}})
                 continue
             if msg.get("id") == my_id:
-                return msg, "".join(chunks)
+                final = next(("".join(s) for s in reversed(segments)
+                              if "".join(s).strip()), "")
+                return msg, final
         raise TimeoutError(method)
 
     def close(self):
