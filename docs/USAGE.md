@@ -117,8 +117,9 @@ clacky connect composio   # paste your API key — unlocks 1000+ apps at once
 clacky connect            # or interactive: name + URL/command (+ token if needed)
 ```
 
-Or hand-edit `~/.hermes/config.yaml` yourself — Clacky's background lane
-picks it up either way:
+Or hand-edit the harness config yourself — `clacky connect` prints its
+location (Windows: `%LOCALAPPDATA%\hermes\config.yaml`); Clacky's background
+lane picks it up either way:
 
 ```yaml
 mcp_servers:

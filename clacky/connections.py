@@ -47,7 +47,16 @@ def api_key_header_for(url: str) -> str | None:
 
 
 def config_path() -> Path:
-    return Path.home() / ".hermes" / "config.yaml"
+    """The harness config file — resolved the way hermes itself resolves it.
+
+    On Windows hermes' home is %LOCALAPPDATA%\\hermes, NOT ~/.hermes (that's
+    the Linux/Mac path most docs show). Asking hermes' own constant is the
+    only way to never write config into a file it never reads."""
+    try:
+        from hermes_constants import get_hermes_home
+        return Path(get_hermes_home()) / "config.yaml"
+    except Exception:
+        return Path.home() / ".hermes" / "config.yaml"
 
 
 def _state_path() -> Path:
@@ -111,6 +120,16 @@ def add_server(name: str, target: str, token: str | None = None) -> Path:
         entry = {"command": cmd[0], "args": cmd[1:]}
 
     servers[name] = entry
+    # Hermes' one-shot CLI sessions only mount MCP servers that are named
+    # EXPLICITLY in the platform toolset list (it resolves 'cli' with
+    # include_default_mcp_servers=False) — without this, connected apps exist
+    # in config but never become tools for background tasks.
+    cli = cfg.setdefault("platform_toolsets", {}).setdefault("cli", ["hermes-cli"])
+    if isinstance(cli, list):
+        if not any(str(t).startswith("hermes-") for t in cli):
+            cli.insert(0, "hermes-cli")
+        if name not in cli:
+            cli.append(name)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
     return p
