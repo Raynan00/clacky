@@ -37,7 +37,8 @@ Clicky is Mac-only. Clacky brings the same idea to the majority of desktops that
 - *"Open Notepad and type hello"*, *"click the Save button"*, *"go to YouTube"* → she acts on your machine.
 - *"Remember I prefer dark mode"*, *"save this as my morning routine"* → cross-session memory + learned routines.
 - *"Check my email"*, *"what's on my calendar"* → opens your logged-in web apps (or an opt-in Google API).
-- *"Go research X and tell me later"* → a background agent works while you keep talking.
+- *"Go research X and tell me later"* → a background agent works while you keep talking — and **leaves you real files**, not just words (via an embedded [hermes-agent](https://github.com/nousresearch/hermes-agent) harness, on your same Claude key).
+- *"Save this as game time — open Steam and Elden Ring tutorials"* → skills are **SKILL.md files** ([agentskills.io](https://agentskills.io) standard) — editable, shareable, PR-able, and shared by both her foreground and background brains.
 
 **The file organizer — `clacky organize`:**
 
@@ -91,11 +92,12 @@ The **file organizer** is move-only and fully reversible (`clacky undo`). The **
 
 ## Roadmap
 
-- **Learnable skills (SKILL.md)** — adopting the same open Agent Skills standard used by Claude, Hermes, and OpenClaw, with Clacky's twist: you teach her by *voice*.
+- ~~Learnable skills (SKILL.md)~~ — **shipped in v0.2**: skills use the same open [Agent Skills standard](https://agentskills.io) as Claude, Hermes, and OpenClaw — with Clacky's twist: you teach her by *voice*.
+- ~~Background agents that leave artifacts~~ — **shipped in v0.2**: "go research X" runs through an embedded [hermes-agent](https://github.com/nousresearch/hermes-agent) harness and hands you real files.
 - **Clacky Bridge (MCP)** — exposing her eyes and pointer as an MCP server, so *any* agent (Claude, OpenClaw, Hermes) can see and point at a Windows screen.
 - **Better desktop control** — opt-in shortcut/icon arrangement, more launcher coverage.
 
-Issues and PRs very welcome — this is an early build and the fastest way to shape it. 🧤
+Issues and PRs very welcome — **contributing a skill is a 5-minute PR** (see [CONTRIBUTING.md](CONTRIBUTING.md)). 🧤
 
 ## Layout
 

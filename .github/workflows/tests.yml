@@ -1,0 +1,21 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install core + dev deps
+        run: pip install -e ".[dev]"
+      - name: Run the suite
+        run: python -m pytest -q
+      - name: Compile the shell (import-safety without a GUI)
+        run: python -m py_compile clacky/shell/companion_manager.py clacky/shell/routing.py clacky/shell/tour.py clacky/shell/actions.py clacky/shell/harness.py clacky/shell/agent_skills.py clacky/shell/memory_store.py clacky/shell/config.py

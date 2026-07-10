@@ -73,8 +73,20 @@ A small buddy appears near your cursor and Clacky sits in the system tray.
 **Email / calendar** (opens your logged-in web apps)
 - "Check my email."  ·  "What's on my calendar today?"
 
-**Background research** (works while you keep talking)
-- "Go find out the best budget laptops right now and tell me later."
+**Background agents** (work while you keep talking — and leave you files)
+- "Go research the best budget laptops and tell me later." → she reports back
+  during a lull and opens a folder with a written report.
+- Powered by an embedded [hermes-agent](https://github.com/nousresearch/hermes-agent)
+  harness running on your same Anthropic key. Enable it with
+  `pip install -e ".[background]"` (source) or by installing Hermes itself
+  (`.exe` users — Clacky finds it on PATH). Without it, background tasks fall
+  back to a spoken web-research summary. Artifacts land in `~/.clacky/background/`.
+
+**Skills** (teach her once, she keeps it — the [agentskills.io](https://agentskills.io) standard)
+- "Save this as game time — open Steam and Elden Ring tutorials." → writes
+  `~/.clacky/skills/game-time/SKILL.md`. Edit it in any editor, drop in skills
+  from the community, or PR yours to the repo. Both her foreground agent and
+  background harness use the same skills.
 
 ## 5. Troubleshooting
 
@@ -124,6 +136,12 @@ override the built-ins.
 | `CLACKY_STREAM_STT` / `CLACKY_STREAM_TTS` | `1` | `0` reverts to batch STT / whole-reply TTS |
 | `CLACKY_MOVE_STAGGER` | `0.12` | Seconds between file moves during organize/undo (`0` = instant) |
 | `CLACKY_ORGANIZE_MODEL` | Haiku | Model that plans folder cleanups |
+| `CLACKY_BG_MODEL` | `claude-sonnet-5` | Model background agents run on |
+| `CLACKY_BG_TIMEOUT` | `600` | Max seconds per background task |
+
+Spend note: Clacky never limits what you can ask of her — background tasks run
+on your key at your discretion. If you want hard spend caps, set them where
+they belong: [console.anthropic.com](https://console.anthropic.com) → Settings → Limits.
 
 ## 6. Optional: Gmail / Calendar via the Google API
 

@@ -30,6 +30,11 @@ re-vendor:
    - `actions.py` — the Computer Use agent loop, app/URL launching, the
      voice-driven (journaled, reversible) organizer, Google Workspace tools,
      and background research agents
+   - `harness.py` — the background-work lane: an embedded agent harness
+     (hermes-agent, headless) that runs delegated tasks in per-task workspaces
+     and produces artifacts
+   - `agent_skills.py` — learnable skills as SKILL.md files (agentskills.io
+     standard), shared by the foreground agent and the background harness
    - plus `memory_store.py` (cross-session memory + routines),
      `google_workspace.py`, `session_log.py` (timestamped flight recorder),
      and `audio/stt/deepgram_streaming.py` (live push-to-talk STT)
