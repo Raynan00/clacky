@@ -311,6 +311,17 @@ class CompanionManager(RoutingMixin, TourMixin, ActionsMixin, QObject):
             agent_skills.migrate_legacy(self._memory.skills)
         except Exception:
             pass
+        # A COMPOSIO_API_KEY in .env auto-connects the 1000-app broker (same
+        # as pasting it in the wizard) — env users shouldn't need a second step.
+        try:
+            key = os.environ.get("COMPOSIO_API_KEY", "").strip()
+            if key:
+                from clacky.connections import (KNOWN_APPS, add_server,
+                                                connected_servers)
+                if "composio" not in connected_servers():
+                    add_server("composio", KNOWN_APPS["composio"], key)
+        except Exception:
+            pass
         # Background agents: id -> {desc, status, result, task}
         self._bg: dict[int, dict] = {}
         self._bg_counter = 0
