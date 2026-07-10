@@ -15,7 +15,7 @@ Requires **Windows 10/11** and **Python 3.10+**.
 ```powershell
 git clone <your-repo-url> clacky
 cd clacky
-pip install -e ".[shell,claude,background]"
+pip install -e ".[shell,claude]"
 ```
 
 This pulls the shell dependencies (PyQt6, sounddevice, mss, uiautomation, edge-tts,
@@ -77,14 +77,24 @@ A small buddy appears near your cursor and Clacky sits in the system tray.
 - "Go research the best budget laptops and tell me later." → she reports back
   during a lull and opens a folder with a written report.
 - Powered by an embedded [hermes-agent](https://github.com/nousresearch/hermes-agent)
-  harness running on your same Anthropic key. Enable it with
-  `pip install -e ".[background]"` (source) or by installing Hermes itself
-  (`.exe` users — Clacky finds it on PATH). Without it, background tasks fall
-  back to a spoken web-research summary. Artifacts land in `~/.clacky/background/`.
+  harness running on your same Anthropic key. **Included by default** in the
+  source install (Python 3.11+). `.exe` users: install Hermes once
+  (`pip install hermes-agent` with any Python 3.11+, or Nous's installer) —
+  Clacky finds it on PATH automatically, no config. Without it, background
+  tasks fall back to a spoken web-research summary — and Clacky will tell you
+  once, at the moment it would have helped, how to upgrade.
+  Artifacts land in `~/.clacky/background/`.
 
 **Connect your apps to background agents (MCP)**
-Background tasks can use any [MCP](https://modelcontextprotocol.io) server —
-add them to `~/.hermes/config.yaml` and Clacky's background lane picks them up:
+Background tasks can use any [MCP](https://modelcontextprotocol.io) server.
+The quick way — one command, two prompts, done:
+
+```powershell
+clacky connect            # asks for a name + URL/command (+ token if hosted)
+```
+
+Or hand-edit `~/.hermes/config.yaml` yourself — Clacky's background lane
+picks it up either way:
 
 ```yaml
 mcp_servers:

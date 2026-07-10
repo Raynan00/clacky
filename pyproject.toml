@@ -17,8 +17,10 @@ gemini = ["google-generativeai>=0.8"]
 # Needs a one-time OAuth setup; the browser-driving path works without this.
 google = ["google-api-python-client>=2.0", "google-auth-oauthlib>=1.0"]
 # Background agent harness (see clacky/shell/harness.py): "go research X" tasks
-# run through hermes-agent and produce real files. Runs on your same Anthropic key.
-background = ["hermes-agent>=0.18"]
+# run through hermes-agent and produce real files. Runs on your same Anthropic
+# key. Already included in [shell] — this standalone extra exists for minimal
+# installs that want only the harness.
+background = ["hermes-agent>=0.18; python_version >= '3.11'"]
 dev = ["pytest>=8.0"]
 # The companion shell (vendored from Bitshank under clacky/shell/). Core deps to
 # launch voice + screen + pointing on the free Ollama path. Premium/optional
@@ -41,6 +43,10 @@ shell = [
     "ollama>=0.3.0",
     "uiautomation>=2.0.18",   # Tier-1 pixel-perfect pointing (Windows UIA)
     "pynput>=1.7.7",          # Phase-2 actuation + workflow capture
+    # Background agents are on by default: "go research X and tell me later"
+    # leaves real files. Hermes needs 3.11+; on 3.10 Clacky quietly falls back
+    # to spoken research summaries.
+    "hermes-agent>=0.18; python_version >= '3.11'",
 ]
 
 [project.scripts]

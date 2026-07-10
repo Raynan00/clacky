@@ -37,7 +37,7 @@ Clicky is Mac-only. Clacky brings the same idea to the majority of desktops that
 - *"Open Notepad and type hello"*, *"click the Save button"*, *"go to YouTube"* → she acts on your machine.
 - *"Remember I prefer dark mode"*, *"save this as my morning routine"* → cross-session memory + learned routines.
 - *"Check my email"*, *"what's on my calendar"* → opens your logged-in web apps (or an opt-in Google API).
-- *"Go research X and tell me later"* → a background agent works while you keep talking — and **leaves you real files**, not just words (via an embedded [hermes-agent](https://github.com/nousresearch/hermes-agent) harness, on your same Claude key). Background agents can also use **any MCP server you connect** (Composio, etc.) — so tasks can end in your Notion or Sheets, not just on disk.
+- *"Go research X and tell me later"* → a background agent works while you keep talking — and **leaves you real files**, not just words (via an embedded [hermes-agent](https://github.com/nousresearch/hermes-agent) harness, on your same Claude key). Background agents can also use **any MCP server you connect** — `clacky connect` wires one up in under a minute (Composio, etc.) — so tasks can end in your Notion or Sheets, not just on disk.
 - *"Save this as game time — open Steam and Elden Ring tutorials"* → skills are **SKILL.md files** ([agentskills.io](https://agentskills.io) standard) — editable, shareable, PR-able, and shared by both her foreground and background brains.
 
 **The file organizer — `clacky organize`:**
@@ -63,11 +63,12 @@ Whisper). A first-run setup wizard collects both — links included.
 ```powershell
 git clone https://github.com/Raynan00/clacky.git
 cd clacky
-pip install -e ".[shell,claude,background]"
+pip install -e ".[shell,claude]"
 clacky run
 ```
 
-(`background` gives her agents that leave you files — drop it for a lighter install.)
+Background agents — the ones that leave you files — are included by default
+(Python 3.11+; on 3.10 she falls back to spoken summaries).
 
 Keys: let the wizard collect them, or copy `.env.example` → `clacky/shell/.env`:
 
