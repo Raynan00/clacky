@@ -88,21 +88,11 @@ def _cmd_run(_args) -> int:
 
 def _cmd_connect(args) -> int:
     """Wire an app/MCP server into the background-agent lane (~/.hermes/config.yaml)."""
-    try:
-        import yaml
-    except ImportError:
-        print("Clacky: connecting apps needs PyYAML.\n       pip install pyyaml",
-              file=sys.stderr)
-        return 3
+    from . import connections
 
-    cfg_path = Path.home() / ".hermes" / "config.yaml"
-    cfg = {}
-    if cfg_path.exists():
-        cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
-    servers = cfg.setdefault("mcp_servers", {})
-
-    if servers and not args.name:
-        print("Connected so far: " + ", ".join(sorted(servers)))
+    existing = connections.connected_servers()
+    if existing and not args.name:
+        print("Connected so far: " + ", ".join(existing))
 
     name = args.name or input("Name for this connection (e.g. notion, composio): ").strip()
     if not name:
@@ -111,29 +101,40 @@ def _cmd_connect(args) -> int:
 
     target = args.url or args.command
     if not target:
-        target = input("Server URL (hosted, e.g. from composio.dev) "
-                       "or local command (e.g. python -m mcp_server_fetch): ").strip()
+        known = connections.known_app_url(name)
+        if known:
+            print(f"Using the official {name} server: {known}")
+            target = known
+        else:
+            target = input("Server URL (hosted, e.g. from composio.dev) "
+                           "or local command (e.g. python -m mcp_server_fetch): ").strip()
     if not target:
         print("Clacky: a URL or command is required.", file=sys.stderr)
         return 2
 
-    if target.startswith(("http://", "https://")):
-        entry = {"url": target}
-        token = args.token if args.token is not None else \
-            input("Auth token, if it needs one (Enter to skip): ").strip()
-        if token:
-            entry["headers"] = {"Authorization": f"Bearer {token}"}
-    else:
-        cmd = target.split()
-        entry = {"command": cmd[0], "args": cmd[1:]}
+    token = args.token
+    if not token and target.startswith(("http://", "https://")):
+        # Browser sign-in first — approve in the browser, no token hunting.
+        try:
+            connections.connect_oauth(name, target,
+                                      on_status=lambda s: print("  " + s))
+            print(f"\nConnected '{name}'. Background agents can use it right away. Try:\n"
+                  f'  "go research X and put it in my {name}"')
+            return 0
+        except Exception as e:
+            print(f"  Browser sign-in unavailable ({e}).")
+            token = input("Auth token instead (Enter to skip): ").strip()
 
-    servers[name] = entry
-    cfg_path.parent.mkdir(parents=True, exist_ok=True)
-    cfg_path.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
+    try:
+        cfg_path = connections.add_server(name, target, token or None)
+    except ImportError:
+        print("Clacky: connecting apps needs PyYAML.\n       pip install pyyaml",
+              file=sys.stderr)
+        return 3
 
     print(f"\nConnected '{name}'. Background agents can use it right away. Try:\n"
           f'  "go research X and put it in my {name}"')
-    if isinstance(entry.get("headers"), dict):
+    if token:
         print(f"(Token saved locally in {cfg_path} -- never commit that file.)")
     return 0
 

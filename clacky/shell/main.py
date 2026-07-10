@@ -108,6 +108,22 @@ def main():
         lambda e: tray.show_notification("Clacky error", str(e))
     )
 
+    # Background task wants an app that isn't connected → offer to wire it up
+    # (just-in-time, Cowork-style; skipping just falls back to files)
+    from ui.connect_dialog import ConnectDialog
+    open_connect_dialogs = []            # keep refs so Qt doesn't GC them
+
+    def _on_connect_prompt(app_name: str, on_done):
+        dlg = ConnectDialog(app_name, on_done)
+        open_connect_dialogs.append(dlg)
+        dlg.finished.connect(lambda _r, d=dlg: open_connect_dialogs.remove(d)
+                             if d in open_connect_dialogs else None)
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
+
+    manager.sig_connect_prompt.connect(_on_connect_prompt)
+
     # Panel → Manager
     panel.on_model_changed.connect(manager.set_model)
 

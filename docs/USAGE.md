@@ -88,10 +88,23 @@ A small buddy appears near your cursor and Clacky sits in the system tray.
 
 **Connect your apps to background agents (MCP)**
 Background tasks can use any [MCP](https://modelcontextprotocol.io) server.
-The quick way — one command, two prompts, done:
+The easiest way is to just ask: say *"go research X and put it in my Notion"*
+and if Notion isn't connected yet, Clacky pops a small window — hit
+**Connect**, approve in the browser that opens, and the task carries on with
+real delivery. No tokens to hunt down (it's the same OAuth flow Claude Code
+uses; Clacky renews the tokens herself). Skip instead, and she leaves you
+files. Never a gate.
+
+Apps with official hosted servers (Notion, Linear, Sentry, GitHub, Hugging
+Face) need zero typing — Clacky knows their URLs. Anything else, paste the
+server URL; if it doesn't do browser sign-in (e.g. Composio's per-user
+URLs), a token field is right there.
+
+You can also connect ahead of time:
 
 ```powershell
-clacky connect            # asks for a name + URL/command (+ token if hosted)
+clacky connect notion     # opens your browser to approve — that's the whole flow
+clacky connect            # or interactive: name + URL/command (+ token if needed)
 ```
 
 Or hand-edit `~/.hermes/config.yaml` yourself — Clacky's background lane

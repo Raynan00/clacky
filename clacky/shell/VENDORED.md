@@ -35,6 +35,9 @@ re-vendor:
      and produces artifacts
    - `agent_skills.py` — learnable skills as SKILL.md files (agentskills.io
      standard), shared by the foreground agent and the background harness
+   - `ui/connect_dialog.py` — just-in-time app connect prompt: when a
+     background task asks to deliver into an app that isn't connected, offer
+     to wire it up on the spot (config plumbing lives in `clacky/connections.py`)
    - plus `memory_store.py` (cross-session memory + routines),
      `google_workspace.py`, `session_log.py` (timestamped flight recorder),
      and `audio/stt/deepgram_streaming.py` (live push-to-talk STT)

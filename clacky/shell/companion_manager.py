@@ -280,6 +280,7 @@ class CompanionManager(RoutingMixin, TourMixin, ActionsMixin, QObject):
     sig_underline           = pyqtSignal(float, float, float)
     sig_label               = pyqtSignal(float, float, str)
     sig_recording_state     = pyqtSignal(bool, str)       # (is_recording, output_dir)
+    sig_connect_prompt      = pyqtSignal(str, object)     # (app_name, on_done(bool))
 
     def __init__(self):
         super().__init__()

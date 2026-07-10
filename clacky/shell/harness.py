@@ -60,6 +60,15 @@ def _task_workspace(task: str) -> Path:
     return ws
 
 
+def _connected_servers() -> list[str]:
+    """Names of MCP servers the harness will actually have (from its config)."""
+    try:
+        from clacky.connections import connected_servers
+        return connected_servers()
+    except Exception:
+        return []
+
+
 def _build_prompt(task: str, ws: Path) -> str:
     skill_part = ""
     try:
@@ -70,11 +79,18 @@ def _build_prompt(task: str, ws: Path) -> str:
                           f"\"{m.name}\" — follow its instructions:\n{m.body}\n")
     except Exception:
         pass
+    servers = _connected_servers()
+    connected = ", ".join(servers) if servers else "none"
     return (
         f"You are Clacky's background worker. Task: {task}{skill_part}\n\n"
         f"Work autonomously. Save any outputs — reports, lists, documents, "
         f"data — as files inside this folder: {ws}\n"
         f"Prefer a single well-named markdown file for research-style tasks.\n"
+        f"Connected external apps (MCP servers): {connected}. If the task asks "
+        f"you to deliver output to an app that is NOT connected, do not attempt "
+        f"it and never claim you did — save the output as files here instead, "
+        f"and say in your summary that the app isn't connected yet and that "
+        f"running 'clacky connect' would wire it up.\n"
         f"When done, reply with a SHORT spoken-style summary (2-3 sentences, "
         f"for the ear: no paths, no markdown) of what you found or did."
     )
@@ -87,6 +103,13 @@ async def run_background_task(task: str, timeout_s: int | None = None) -> Harnes
     CLACKY_BG_TIMEOUT seconds (default 600)."""
     if not harness_available():
         return HarnessResult(False, "no harness installed")
+
+    # Renew any expired connected-app tokens (OAuth) so deliveries keep working.
+    try:
+        from clacky.connections import refresh_stale
+        refresh_stale()
+    except Exception:
+        pass
 
     ws = _task_workspace(task)
     model = os.environ.get("CLACKY_BG_MODEL", "claude-sonnet-5")

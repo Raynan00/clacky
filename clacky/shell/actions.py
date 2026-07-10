@@ -252,6 +252,12 @@ class ActionsMixin:
         try:
             import harness
             if harness.harness_available():
+                # Cowork-style pre-flight: if the task wants to deliver into an
+                # app that isn't connected, offer to wire it up right now.
+                # Either answer proceeds — this is an offer, never a gate.
+                app = await self._missing_delivery_app(description)
+                if app:
+                    await self._offer_connection(app)
                 res = await harness.run_background_task(description)
                 self._bg[tid].update(status="done" if res.ok else "error",
                                      result=res.summary)
@@ -279,6 +285,55 @@ class ActionsMixin:
             self._bg[tid].update(status="error")
             result = "I ran into a problem looking into that."
         await self._bg_report(tid, result)
+
+    async def _missing_delivery_app(self, description: str) -> str | None:
+        """Does this task ask to deliver output into a named app that isn't
+        connected? No hardcoded app names — Haiku decides against the live
+        connected list. Returns the missing app's name, or None."""
+        try:
+            from clacky.connections import connected_servers
+            connected = ", ".join(connected_servers()) or "none"
+            client = self._get_anthropic()
+            resp = await client.messages.create(
+                model="claude-haiku-4-5-20251001", max_tokens=20,
+                system=("You check background tasks for delivery targets. "
+                        "If the task explicitly asks to put/save/send its output "
+                        "into a named external app or service that is NOT in the "
+                        "connected list, reply with just that app's name — one "
+                        "short lowercase word. Otherwise reply exactly: none"),
+                messages=[{"role": "user",
+                           "content": f"Task: {description}\nConnected: {connected}"}])
+            app = " ".join(b.text for b in resp.content
+                           if b.type == "text").strip().lower()
+            if not app or app == "none" or len(app.split()) > 2:
+                return None
+            return None if app in connected_servers() else app
+        except Exception as e:
+            print("[clacky-debug] delivery pre-flight error:", e, flush=True)
+            return None
+
+    async def _offer_connection(self, app: str) -> bool:
+        """Pop the connect dialog (via the Qt thread) and wait — bounded — for
+        the user's answer. True if they connected the app."""
+        loop = asyncio.get_running_loop()
+        fut: asyncio.Future = loop.create_future()
+
+        def _done(connected: bool):
+            loop.call_soon_threadsafe(
+                lambda: fut.set_result(connected) if not fut.done() else None)
+
+        await self._reply_local(
+            f"Heads up — {app} isn't connected yet, so I put a window on your "
+            f"screen to link it. Connect it there, or hit skip and I'll leave "
+            f"you the files.")
+        self.sig_connect_prompt.emit(app, _done)
+        try:
+            connected = await asyncio.wait_for(fut, timeout=180)
+        except asyncio.TimeoutError:
+            return False
+        if connected:
+            await self._reply_local(f"{app} is connected — on it.")
+        return connected
 
     async def _research_agent(self, description: str) -> str:
         """Background research via Anthropic's web_search; falls back to a
