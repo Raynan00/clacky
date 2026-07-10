@@ -337,6 +337,17 @@ class ActionsMixin:
             shots = capture_all_screens()
             if not shots:
                 return ""
+            # The focused window is what "this" means — Windows knows it, so
+            # the model doesn't have to guess among nine open apps.
+            try:
+                from tutor import active_window_title
+                focused = active_window_title()
+            except Exception:
+                focused = ""
+            anchor = (f"The window in focus is titled \"{focused}\" — that is "
+                      f"what the user means; ignore everything else. "
+                      if focused else
+                      "Describe whichever window appears active. ")
             client = self._get_anthropic()
             content = [{"type": "image", "source": {"type": "base64",
                         "media_type": "image/jpeg", "data": s.base64_jpeg}}
@@ -345,11 +356,10 @@ class ActionsMixin:
                 {"type": "text", "text":
                  f"The user just delegated this task while looking at "
                  f"their screen{'s' if len(shots) > 1 else ''}: "
-                 f"\"{description}\". In 2-4 sentences, state what "
+                 f"\"{description}\". {anchor}In 2-4 sentences, state what "
                  f"they're looking at — app, page/document title, URL if "
                  f"visible — and the specific content the task's "
-                 f"references point to. If one screen is clearly the "
-                 f"active one, describe that one."})
+                 f"references point to."})
             resp = await client.messages.create(
                 model="claude-haiku-4-5-20251001", max_tokens=300,
                 messages=[{"role": "user", "content": content}])
